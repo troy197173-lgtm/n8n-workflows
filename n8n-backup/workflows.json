@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2025-12-13T08:46:41.778Z",
+  "exportedAt": "2025-12-13T08:47:03.904Z",
   "workflows": [
     {
       "data": [
@@ -1909,7 +1909,7 @@
           "tags": []
         },
         {
-          "updatedAt": "2025-12-13T08:42:13.000Z",
+          "updatedAt": "2025-12-13T08:46:48.000Z",
           "createdAt": "2025-12-09T05:41:35.661Z",
           "id": "RUiAyFbRlj7NobUK",
           "name": "Backup workflows to GitHub",
@@ -1966,7 +1966,7 @@
             },
             {
               "parameters": {
-                "jsCode": "// すべてのワークフローを配列にまとめる\nconst workflows = items.map(i => i.json);\n\n// JSON文字列に変換\nconst content = JSON.stringify(\n  {\n    exportedAt: new Date().toISOString(),\n    workflows\n  },\n  null,\n  2\n);\n\n// GitHubに保存するファイル情報\nreturn [\n  {\n    json: {\n      path: \"n8n-backup/workflows.json\",\n      contentBase64: Buffer.from(content).toString(\"base64\")\n    }\n  }\n];\n"
+                "jsCode": "const workflows = items.map(i => i.json);\n\n// 文字列化（整形）\nlet text = JSON.stringify(\n  { exportedAt: new Date().toISOString(), workflows },\n  null,\n  2\n);\n\n// GitHubが誤検知/検知しやすいトークン形式をマスク（安全側）\nconst patterns = [\n  /github_pat_[A-Za-z0-9_]+/g,                 // Fine-grained PAT\n  /ghp_[A-Za-z0-9]{20,}/g,                     // Classic PAT\n  /gho_[A-Za-z0-9]{20,}/g,                     // OAuth token (例)\n  /ghu_[A-Za-z0-9]{20,}/g,\n  /ghs_[A-Za-z0-9]{20,}/g,\n  /ghr_[A-Za-z0-9]{20,}/g,\n  /GITHUB_TOKEN(_V2)?[A-Za-z0-9_\\-]{10,}/g,    // 検知されやすいプレースホルダ\n];\n\nfor (const re of patterns) {\n  text = text.replace(re, \"[REDACTED]\");\n}\n\nreturn [{\n  json: {\n    path: \"n8n-backup/workflows.json\",\n    contentBase64: Buffer.from(text, \"utf8\").toString(\"base64\"),\n  }\n}];\n"
               },
               "type": "n8n-nodes-base.code",
               "typeVersion": 2,
@@ -2184,7 +2184,7 @@
             "templateCredsSetupCompleted": true
           },
           "pinData": {},
-          "versionId": "d459ea08-23ef-4a14-aebc-abf1706893e5",
+          "versionId": "8070ce7f-5381-48d2-b5bd-7e0abea8a55e",
           "triggerCount": 0,
           "shared": [
             {
