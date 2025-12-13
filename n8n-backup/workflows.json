@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2025-12-13T08:09:54.413Z",
+  "exportedAt": "2025-12-13T08:46:41.778Z",
   "workflows": [
     {
       "data": [
@@ -1909,7 +1909,7 @@
           "tags": []
         },
         {
-          "updatedAt": "2025-12-13T05:56:23.000Z",
+          "updatedAt": "2025-12-13T08:42:13.000Z",
           "createdAt": "2025-12-09T05:41:35.661Z",
           "id": "RUiAyFbRlj7NobUK",
           "name": "Backup workflows to GitHub",
@@ -1930,7 +1930,7 @@
               "name": "Daily at 23:59",
               "type": "n8n-nodes-base.cron",
               "position": [
-                368,
+                240,
                 240
               ],
               "typeVersion": 1,
@@ -1938,97 +1938,21 @@
             },
             {
               "parameters": {
-                "filters": {},
-                "requestOptions": {}
-              },
-              "type": "n8n-nodes-base.n8n",
-              "typeVersion": 1,
-              "position": [
-                528,
-                128
-              ],
-              "id": "6fc92659-a97b-4503-b308-68db7ecd826b",
-              "name": "Get many workflows",
-              "credentials": {
-                "n8nApi": {
-                  "id": "PWQ7iWUX9gX7G09I",
-                  "name": "n8n account"
-                }
-              }
-            },
-            {
-              "parameters": {
-                "options": {}
-              },
-              "type": "n8n-nodes-base.splitInBatches",
-              "typeVersion": 3,
-              "position": [
-                736,
-                240
-              ],
-              "id": "b51bc493-ef06-435f-8ea2-07e99160fc58",
-              "name": "Loop Over Items"
-            },
-            {
-              "parameters": {
-                "resource": "file",
-                "operation": "edit",
-                "owner": {
-                  "__rl": true,
-                  "value": "troy197173-lgtm",
-                  "mode": "name"
-                },
-                "repository": {
-                  "__rl": true,
-                  "value": "n8n-workflows",
-                  "mode": "list",
-                  "cachedResultName": "n8n-workflows",
-                  "cachedResultUrl": "https://github.com/troy197173-lgtm/n8n-workflows"
-                },
-                "filePath": "=workflows/{{ $('Code').item.json.fileName }}",
-                "fileContent": "=Update: {{ $('Code').item.json.fileName }}",
-                "commitMessage": "=New: {{ $('Code').item.json.fileName }}"
-              },
-              "type": "n8n-nodes-base.github",
-              "typeVersion": 1.1,
-              "position": [
-                1168,
-                256
-              ],
-              "id": "be51e796-6c7a-44d9-ab60-5deedb88f8f0",
-              "name": "Edit a file",
-              "webhookId": "3f801c8e-85a4-43d6-8ce5-d1c6c8643ab4",
-              "credentials": {
-                "githubApi": {
-                  "id": "kcQOy1Y2pQvP3UzC",
-                  "name": "github-n8n-backup"
-                }
-              }
-            },
-            {
-              "parameters": {
-                "jsCode": "// 【重要】入力データの配列の最初の要素（インデックス 0）を参照するように修正\nconst workflow = $input.json[0]; \n\n// ワークフローのデータに name プロパティがあるかチェック\nif (!workflow || !workflow.name) {\n    // ワークフロー名がない場合は処理をスキップまたはエラーをログ\n    throw new Error('Workflow data or name property is missing in the input.');\n}\n\n// ワークフロー名から、GitHubのパスとして安全なファイル名を生成\n// 例: \"My Awesome Workflow\" -> \"My_Awesome_Workflow.json\"\nconst cleanName = workflow.name\n    // 日本語や記号をアンダースコアに置換\n    .replace(/[^\\w\\s-]/g, '_') \n    // スペースをアンダースコアに置換\n    .replace(/[\\s]/g, '_') \n    .trim();\n\n// JSONを整形し、読みやすくするためにインデントを付けて文字列化\nconst fileContent = JSON.stringify(workflow, null, 2);\n\n// 後続のノードに渡すデータを出力\nreturn [{\n    json: {\n        fileName: `${cleanName}.json`,\n        fileContent: fileContent,\n    }\n}];"
-              },
-              "type": "n8n-nodes-base.code",
-              "typeVersion": 2,
-              "position": [
-                960,
-                256
-              ],
-              "id": "ae50c6e6-b297-4162-bdbb-a06900f34df6",
-              "name": "Code"
-            },
-            {
-              "parameters": {
-                "url": "https://n8n.srv888167.hstgr.cloud/api/v1/workflows?includeJson=true",
+                "url": "https://n8n.srv888167.hstgr.cloud/api/v1/workflows",
                 "authentication": "predefinedCredentialType",
                 "nodeCredentialType": "n8nApi",
-                "options": {}
+                "options": {
+                  "response": {
+                    "response": {
+                      "responseFormat": "json"
+                    }
+                  }
+                }
               },
               "type": "n8n-nodes-base.httpRequest",
               "typeVersion": 4.3,
               "position": [
-                576,
+                400,
                 240
               ],
               "id": "1d2e0ab1-bb98-4e0a-9cfd-f264eba9d4b0",
@@ -2039,6 +1963,149 @@
                   "name": "n8n account"
                 }
               }
+            },
+            {
+              "parameters": {
+                "jsCode": "// すべてのワークフローを配列にまとめる\nconst workflows = items.map(i => i.json);\n\n// JSON文字列に変換\nconst content = JSON.stringify(\n  {\n    exportedAt: new Date().toISOString(),\n    workflows\n  },\n  null,\n  2\n);\n\n// GitHubに保存するファイル情報\nreturn [\n  {\n    json: {\n      path: \"n8n-backup/workflows.json\",\n      contentBase64: Buffer.from(content).toString(\"base64\")\n    }\n  }\n];\n"
+              },
+              "type": "n8n-nodes-base.code",
+              "typeVersion": 2,
+              "position": [
+                608,
+                240
+              ],
+              "id": "af32793e-fe1f-4ff6-b6ef-cf266f31db84",
+              "name": "Code in JavaScript1"
+            },
+            {
+              "parameters": {
+                "method": "PUT",
+                "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}",
+                "sendHeaders": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "Authorization",
+                      "value": "Bearer [REDACTED]"
+                    },
+                    {
+                      "name": "Accept",
+                      "value": "application/vnd.github+json"
+                    }
+                  ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                  "parameters": [
+                    {
+                      "name": "message",
+                      "value": "backup n8n workflows"
+                    },
+                    {
+                      "name": "branch",
+                      "value": "main"
+                    },
+                    {
+                      "name": "content",
+                      "value": "={{ $('Code in JavaScript1').item.json.contentBase64 }}"
+                    },
+                    {
+                      "name": "sha",
+                      "value": "={{$json.putBody.sha}}"
+                    }
+                  ]
+                },
+                "options": {
+                  "response": {
+                    "response": {
+                      "fullResponse": true
+                    }
+                  }
+                }
+              },
+              "type": "n8n-nodes-base.httpRequest",
+              "typeVersion": 4.3,
+              "position": [
+                1456,
+                256
+              ],
+              "id": "00dc767f-3a6c-45d0-8b1a-3e16ddd13cb0",
+              "name": "HTTP Request2"
+            },
+            {
+              "parameters": {
+                "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}?ref=main",
+                "sendHeaders": true,
+                "headerParameters": {
+                  "parameters": [
+                    {
+                      "name": "Authorization",
+                      "value": "Bearer [REDACTED]"
+                    },
+                    {
+                      "name": "Accept",
+                      "value": "application/vnd.github+json"
+                    }
+                  ]
+                },
+                "options": {}
+              },
+              "type": "n8n-nodes-base.httpRequest",
+              "typeVersion": 4.3,
+              "position": [
+                816,
+                240
+              ],
+              "id": "44dcea88-15eb-4421-9811-4437d6eda763",
+              "name": "GitHub GET",
+              "onError": "continueRegularOutput"
+            },
+            {
+              "parameters": {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "031686c4-8e92-460e-a29d-2f5fe5c9657f",
+                      "leftValue": "={{$json.noChange}}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "options": {}
+              },
+              "type": "n8n-nodes-base.if",
+              "typeVersion": 2.2,
+              "position": [
+                1232,
+                240
+              ],
+              "id": "325e3378-8005-4ba0-9927-092ad2f5da93",
+              "name": "If no change"
+            },
+            {
+              "parameters": {
+                "jsCode": "// 新しいBase64（あなたが既に作れてるやつ）\nconst newB64 = $json.contentBase64;\n\n// GitHub GETが成功すると $json.content と $json.sha が入る\n// contentはBase64だけど、GitHubは改行を混ぜて返す場合があるので除去\nconst oldB64 = ($json.content || \"\").replace(/\\n/g, \"\");\n\n// 差分なし判定（Base64同士で比較が最も安定）\nconst noChange = oldB64 && (oldB64 === newB64);\n\n// PUT用ボディ（新規作成でも更新でも使える）\nconst putBody = {\n  message: \"backup n8n workflows\",\n  content: newB64,\n  branch: \"main\",\n};\n\n// 更新時はshaが必須\nif ($json.sha) {\n  putBody.sha = $json.sha;\n}\n\nreturn [{\n  json: {\n    path: $json.path,\n    noChange,\n    putBody,\n  }\n}];\n"
+              },
+              "type": "n8n-nodes-base.code",
+              "typeVersion": 2,
+              "position": [
+                1024,
+                240
+              ],
+              "id": "e8d7fbc7-0e8f-4fd8-a346-b2bbc1bab4c5",
+              "name": "Diff & Build PUT"
             }
           ],
           "connections": {
@@ -2053,39 +2120,56 @@
                 ]
               ]
             },
-            "Get many workflows": {
+            "HTTP Request": {
               "main": [
-                []
+                [
+                  {
+                    "node": "Code in JavaScript1",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
               ]
             },
-            "Loop Over Items": {
+            "Code in JavaScript1": {
+              "main": [
+                [
+                  {
+                    "node": "GitHub GET",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "GitHub GET": {
+              "main": [
+                [
+                  {
+                    "node": "Diff & Build PUT",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Diff & Build PUT": {
+              "main": [
+                [
+                  {
+                    "node": "If no change",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "If no change": {
               "main": [
                 [],
                 [
                   {
-                    "node": "Code",
-                    "type": "main",
-                    "index": 0
-                  }
-                ]
-              ]
-            },
-            "Edit a file": {
-              "main": [
-                [
-                  {
-                    "node": "Loop Over Items",
-                    "type": "main",
-                    "index": 0
-                  }
-                ]
-              ]
-            },
-            "Code": {
-              "main": [
-                [
-                  {
-                    "node": "Edit a file",
+                    "node": "HTTP Request2",
                     "type": "main",
                     "index": 0
                   }
@@ -2100,7 +2184,7 @@
             "templateCredsSetupCompleted": true
           },
           "pinData": {},
-          "versionId": "44e10ca1-458a-4fa6-8d3b-a5242b0e93bc",
+          "versionId": "d459ea08-23ef-4a14-aebc-abf1706893e5",
           "triggerCount": 0,
           "shared": [
             {
