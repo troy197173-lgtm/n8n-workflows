@@ -1,7 +1,7 @@
 {
   "id": "RUiAyFbRlj7NobUK",
   "name": "Backup workflows to GitHub",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
