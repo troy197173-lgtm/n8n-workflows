@@ -19,13 +19,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "x-goog-api-key",
-              "value": "AIzaSyBtdEdnhcMnIX9kqapJd2ZJKmpKUPSpE0s"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -45,7 +43,13 @@
         64
       ],
       "id": "35d28a04-64f3-4ecc-be87-9d5a5d82a8eb",
-      "name": "HTTP Request"
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "K1Qcrxjl29WjOvIx",
+          "name": "Header Auth account"
+        }
+      }
     },
     {
       "parameters": {
@@ -132,9 +136,9 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=AIzaSyBY1d4ThlKp-sbpGedURG4xWZXbA5Dm6_4",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleApi",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -161,6 +165,10 @@
         "googleApi": {
           "id": "rKIeWR82vBV5zQbG",
           "name": "Google Service Account account 2"
+        },
+        "httpHeaderAuth": {
+          "id": "K1Qcrxjl29WjOvIx",
+          "name": "Header Auth account"
         }
       }
     },
