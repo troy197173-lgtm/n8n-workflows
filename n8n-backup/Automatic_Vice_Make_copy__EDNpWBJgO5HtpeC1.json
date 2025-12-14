@@ -1,0 +1,27 @@
+{
+  "id": "EDNpWBJgO5HtpeC1",
+  "name": "Automatic Vice Make copy",
+  "active": false,
+  "isArchived": false,
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-23T07:23:04.792Z",
+      "createdAt": "2025-11-23T07:23:04.792Z",
+      "role": "workflow:owner",
+      "workflowId": "EDNpWBJgO5HtpeC1",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
