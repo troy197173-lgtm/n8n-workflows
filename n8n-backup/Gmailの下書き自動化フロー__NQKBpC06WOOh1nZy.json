@@ -1,0 +1,230 @@
+{
+  "id": "NQKBpC06WOOh1nZy",
+  "name": "Gmailの下書き自動化フロー",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "ca00cc93-41a6-4dfb-906d-6dcbdfb28911",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zfCPceexzcJ85e0A",
+          "name": "Gmail account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=## あなたへの依頼\n以下はメールの件名と本文の内容です。このメールに対して返信が必要だと思いますか？　『はい』か『いいえ』で答えてください。ただの通知の場合は『いいえ』にして。\n\n##　メールの件名と本文\n###　件名：{{ $json.Subject }}\n###　本文：{{ $json.snippet }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "b9ba45d3-26d3-4dd6-8b0f-623eb83f1504",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "hnsrYqoNpBnEMUzY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "baf02836-bae3-463c-9cf4-8b24e08e8d58",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "はい",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -32
+      ],
+      "id": "41dd4310-99c9-49ba-9edb-6242bf49ba5c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=##あなたへの依頼\n\n私が受信したメールに対しての返信を作成してみて。\nきちんとした文章で書かれているけれど、親しみも感じる内容にして。\n回答には〇〇様という部分を作らないで、代わりに冒頭に〇〇様と入れて。\n\n##　私が受信したメールの内容\n\n{{ $('Gmail Trigger').item.json.snippet }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        848,
+        -32
+      ],
+      "id": "0259d123-bd8c-4edc-9080-f84b4405c2f7",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "hnsrYqoNpBnEMUzY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "下書き",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1248,
+        -32
+      ],
+      "id": "361efc4c-959e-4aaa-a124-d64a1b8fa33f",
+      "name": "Create a draft",
+      "webhookId": "95c87cf8-a4e0-4da7-9404-7225d8150a0f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zfCPceexzcJ85e0A",
+          "name": "Gmail account "
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Gmail Trigger": {
+      "Gmail Trigger": {
+        "lastTimeChecked": 1753948068,
+        "possibleDuplicates": [
+          "1985f739a1f054f6",
+          "1985f6cc9626123c"
+        ]
+      }
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-07-25T10:55:05.936Z",
+      "createdAt": "2025-07-25T10:55:05.936Z",
+      "role": "workflow:owner",
+      "workflowId": "NQKBpC06WOOh1nZy",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
