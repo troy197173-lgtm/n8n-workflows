@@ -3,71 +3,7 @@
   "name": "Backup your workflows to GitHub",
   "active": false,
   "isArchived": false,
-  "nodes": [
-    {
-      "parameters": {
-        "content": "## Subworkflow",
-        "height": 750.8363163824032,
-        "width": 2086.845881354743,
-        "color": 6
-      },
-      "id": "9a3870e1-e79d-461e-885a-f2e79d76f4e1",
-      "name": "Sticky Note",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        368,
-        880
-      ],
-      "typeVersion": 1
-    },
-    {
-      "parameters": {
-        "content": "## Backup to GitHub \nThis workflow will backup all instance workflows to GitHub.\n\nThe files are saved `ID.json` for the filename.\n\n### Setup\nOpen `Globals` node and update the values below 👇\n\n- **repo.owner:** your Github username\n- **repo.name:** the name of your repository\n- **repo.path:** the folder to use within the repository. If it doesn't exist it will be created.\n\n\nIf your username was `john-doe` and your repository was called `n8n-backups` and you wanted the workflows to go into a `workflows` folder you would set:\n\n- repo.owner - john-doe\n- repo.name - n8n-backups\n- repo.path - workflows/\n\n\nThe workflow calls itself using a subworkflow, to help reduce memory usage.",
-        "height": 601,
-        "width": 371,
-        "color": 4
-      },
-      "id": "5ca560c0-b281-4bea-95bd-c8decd2bb8ee",
-      "name": "Sticky Note1",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        368,
-        240
-      ],
-      "typeVersion": 1
-    },
-    {
-      "parameters": {
-        "content": "## Main workflow loop",
-        "height": 435,
-        "width": 886,
-        "color": 7
-      },
-      "id": "26e38d41-f253-4fa2-964f-54f8b468d211",
-      "name": "Sticky Note2",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        768,
-        432
-      ],
-      "typeVersion": 1
-    },
-    {
-      "parameters": {
-        "content": "### 💡 **Want to learn advanced n8n skills and earn money building workflows?**\n‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎Check out [Scrapes Academy](https://www.skool.com/scrapes/about?ref=21f10ad99f4d46ba9b8aaea8c9f58c34)",
-        "width": 640,
-        "color": 4
-      },
-      "id": "015a5f28-d1ff-4e3b-a303-6d143c7326b1",
-      "name": "Sticky Note16",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        768,
-        240
-      ],
-      "typeVersion": 1
-    }
-  ],
+  "nodes": [],
   "connections": {},
   "settings": {},
   "staticData": null,
