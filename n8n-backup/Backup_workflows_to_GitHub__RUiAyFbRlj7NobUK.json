@@ -54,7 +54,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 入力が { data: [ ... ] } の1件想定\nconst workflows = Array.isArray($json.data) ? $json.data : items.map(i => i.json);\n\nconst patterns = [\n  /github_pat_[A-Za-z0-9_]+/g,\n  /gh[pousr]_[A-Za-z0-9]{20,}/g,\n  /GITHUB_TOKEN(_V2)?[A-Za-z0-9_\\-]{10,}/g,\n];\n\n// 1 workflow = 1 item（= 1ファイル）で返す\nreturn workflows.map(wf => {\n  const copy = { ...wf };\n  delete copy.updatedAt;\n  delete copy.createdAt;\n  delete copy.versionId;\n\n  let text = JSON.stringify(copy, null, 2);\n  for (const re of patterns) text = text.replace(re, \"[REDACTED]\");\n\n  return {\n    json: {\n      path: `n8n-backup/${copy.id}.json`,\n      contentBase64: Buffer.from(text, \"utf8\").toString(\"base64\"),\n      name: copy.name,\n    }\n  };\n});\n"
+        "jsCode": "// 入力が { data: [ ... ] } の1件想定\nconst workflows = Array.isArray($json.data)\n  ? $json.data\n  : items.map(i => i.json);\n\n// GitHubトークン等のマスク\nconst patterns = [\n  /github_pat_[A-Za-z0-9_]+/g,\n  /gh[pousr]_[A-Za-z0-9]{20,}/g,\n  /GITHUB_TOKEN(_V2)?[A-Za-z0-9_\\-]{10,}/g,\n];\n\n// ファイル名として安全な文字だけにする関数\nfunction safeName(name) {\n  return String(name || 'unnamed')\n    .replace(/[\\\\/:*?\"<>|]/g, \"_\") // NG文字\n    .replace(/\\s+/g, \"_\")          // 空白→_\n    .replace(/_+/g, \"_\")           // 連続_整理\n    .slice(0, 80);                 // 長さ制限\n}\n\n// 1 workflow = 1 item（= 1ファイル）\nreturn workflows.map(wf => {\n  const copy = { ...wf };\n\n  // 差分が出やすい/不要な項目は削除\n  delete copy.updatedAt;\n  delete copy.createdAt;\n  delete copy.versionId;\n\n  let text = JSON.stringify(copy, null, 2);\n  for (const re of patterns) {\n    text = text.replace(re, \"[REDACTED]\");\n  }\n\n  const fileName = `${safeName(copy.name)}__${copy.id}.json`;\n\n  return {\n    json: {\n      path: `n8n-backup/${fileName}`,\n      contentBase64: Buffer.from(text, \"utf8\").toString(\"base64\"),\n      workflowName: copy.name,\n      workflowId: copy.id,\n    }\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -425,7 +425,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "triggerCount": 0,
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2025-12-09T05:41:35.668Z",
