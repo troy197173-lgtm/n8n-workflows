@@ -1,0 +1,300 @@
+{
+  "id": "wHZugzwu1CzUsrD3",
+  "name": "My workflow",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs",
+          "mode": "list",
+          "cachedResultName": "n8n　AI  news取得テスト　　",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "01_検索ワード一覧",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "ad947201-7916-4fef-920c-7bc3c424c0bd",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyaEHmlz1UlOMhPz",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "23b6a56d-25b0-4693-a79a-04069650aee5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "de9714ca-9df0-4274-9359-d1f5f886ea31",
+              "leftValue": "={{ $json['検索要否'] }}",
+              "rightValue": "必要",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "f9995706-8baa-4541-abb6-cae9f3cceaeb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://newsapi.org/v2/everything?q={{ $json['検索ワード'] }}&language=en&pageSize=5&apiKey=f8a443cd91384d7889a738592d956e2c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -80
+      ],
+      "id": "774ed16e-d083-4dde-a834-05e31d53e549",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=私は日々のニュースの要約を知りたいです。\n以下の分を５０文字程度の一文にわかりやすくまとめてください。\n\nタイトル： {{ $json.articles[0].title }}\n\n記事内容：{{ $json.articles[0].description }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        880,
+        -80
+      ],
+      "id": "4392c552-d708-4ed0-8958-0ed647f9c914",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zcwPxXpuWqjHcskU",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs",
+          "mode": "list",
+          "cachedResultName": "n8n　AI  news取得テスト　　",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 448642966,
+          "mode": "list",
+          "cachedResultName": "02_ニュース一覧",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1k7OGyzkM11D3w5JnWmzJ7joT9nwv2RQeySezKuCozBs/edit#gid=448642966"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "日付": "={{ $('HTTP Request').item.json.articles[0].publishedAt }}",
+            "検索ワード": "={{ $('Get row(s) in sheet').item.json['検索ワード'] }}",
+            "記事内容": "={{ $json.message.content }}",
+            "ＵＲＬ": "={{ $('HTTP Request').item.json.articles[0].url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "日付",
+              "displayName": "日付",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "検索ワード",
+              "displayName": "検索ワード",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "記事内容",
+              "displayName": "記事内容",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ＵＲＬ",
+              "displayName": "ＵＲＬ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1240,
+        -80
+      ],
+      "id": "a4e9eb40-5d1b-4a16-8b49-be0815dbe60e",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyaEHmlz1UlOMhPz",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-06-30T07:19:44.295Z",
+      "createdAt": "2025-06-30T07:19:44.295Z",
+      "role": "workflow:owner",
+      "workflowId": "wHZugzwu1CzUsrD3",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
