@@ -1,0 +1,26 @@
+{
+  "id": "CnNMHvwTlNfBaM2j",
+  "name": "空白ワークフロー",
+  "active": false,
+  "isArchived": false,
+  "nodes": [],
+  "connections": {},
+  "settings": {},
+  "staticData": null,
+  "meta": {
+    "templateId": "2652",
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-09T07:44:04.261Z",
+      "createdAt": "2025-12-09T07:44:04.261Z",
+      "role": "workflow:owner",
+      "workflowId": "CnNMHvwTlNfBaM2j",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
