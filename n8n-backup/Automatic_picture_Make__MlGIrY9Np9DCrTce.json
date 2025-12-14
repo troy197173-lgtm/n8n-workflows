@@ -1,0 +1,198 @@
+{
+  "id": "MlGIrY9Np9DCrTce",
+  "name": "Automatic picture Make",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05e14167-cbf5-45d3-ad1e-f52348e485be",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyBtdEdnhcMnIX9kqapJd2ZJKmpKUPSpE0s"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": {{ JSON.stringify(\"Generate a high quality image based on this theme.　最近のアニメ風のイラストにして Aspect ratio 1:1. \\n\\nTheme: \" + ($json[\"音声\"] || \"Beautiful scenery\")) }}\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.4\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        400,
+        0
+      ],
+      "id": "eeb7989e-dc9f-40c0-89d1-7bd2043a4654",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8",
+          "mode": "list",
+          "cachedResultName": "音声用ファイル",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "037019bd-63f1-4861-a616-26e5408adcf1",
+      "name": "Get row(s) in sheet",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $items(\"Get row(s) in sheet\")[$itemIndex].json[\"picture name\"] }}\n",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
+          "mode": "list",
+          "cachedResultName": "音声ファイル",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        800,
+        0
+      ],
+      "id": "7ee6a872-2ae5-4de7-99c2-cb326570c746",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// =================================================\n// 設定エリア: Google Sheetsのノード名をここに入力\n// =================================================\nconst sheetNodeName = \"Google Sheets1\"; \n\n\n// -------------------------------------------------\n// 処理開始\n// -------------------------------------------------\n\n// 1. ファイル名の取得\n// Execute for Each Itemモードの場合、前のノードのデータも現在のアイテムに対応するものが取れます\nlet fileName = \"generated_image\"; \n\ntry {\n  // $()を使って前のノードのデータを参照\n  // 念のため .item があるか、.json があるかを確認\n  const sheetNode = $(sheetNodeName);\n  if (sheetNode && sheetNode.item && sheetNode.item.json && sheetNode.item.json[\"Filename\"]) {\n    fileName = sheetNode.item.json[\"Filename\"];\n  } else if (sheetNode && sheetNode.json && sheetNode.json[\"Filename\"]) {\n     // バージョンによってはこちらの場合もあります\n     fileName = sheetNode.json[\"Filename\"];\n  }\n} catch (error) {\n  console.log(\"ファイル名取得エラー: デフォルト名を使用します\");\n}\n\n// 2. HTTP Requestの結果から画像データを取得\n// 【ここを修正しました】 items[0] ではなく $input.item を使います\nconst responseData = $input.item.json;\nlet base64String = null;\n\n// 画像データを探す (candidates -> content -> parts -> inlineData)\nif (responseData.candidates && responseData.candidates.length > 0) {\n  const content = responseData.candidates[0].content;\n  \n  if (content && content.parts) {\n    for (const part of content.parts) {\n      if (part.inlineData && part.inlineData.data) {\n        base64String = part.inlineData.data;\n        break; \n      }\n    }\n  }\n}\n\nif (!base64String) {\n  throw new Error(\"画像データが見つかりません。\");\n}\n\n// 3. バイナリ変換\nconst binaryData = Buffer.from(base64String, 'base64');\n\n// 4. 出力 (アイテムごとに返すので配列[]で囲む必要はありません)\nreturn {\n  json: {\n    filename: fileName,\n    message: \"画像変換成功\"\n  },\n  binary: {\n    data: {\n      data: binaryData.toString('base64'),\n      mimeType: 'image/png',\n      fileName: `${fileName}.png`\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "61bce59a-e595-4443-8b98-b2d8763ba313",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-23T23:48:33.056Z",
+      "createdAt": "2025-11-23T23:48:33.056Z",
+      "role": "workflow:owner",
+      "workflowId": "MlGIrY9Np9DCrTce",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
