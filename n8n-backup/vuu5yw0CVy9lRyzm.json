@@ -1,0 +1,348 @@
+{
+  "id": "vuu5yw0CVy9lRyzm",
+  "name": "Automatic vertical picture for short and voice Make",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        64
+      ],
+      "id": "d4f4901e-139c-46ab-b2de-605ed696def7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyBtdEdnhcMnIX9kqapJd2ZJKmpKUPSpE0s"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": {{ JSON.stringify(\n  \"Generate a high quality vertical portrait image \" +\n  \"Aspect ratio 9:16, resolution around 1080x1920. \" +\n  \"Cinematic lighting, detailed illustration. \\n\\n\" +\n  \"Theme: \" + ($json[\"音声\"] || \"Beautiful vertical scene\")\n) }}\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.4\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        400,
+        64
+      ],
+      "id": "35d28a04-64f3-4ecc-be87-9d5a5d82a8eb",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8",
+          "mode": "list",
+          "cachedResultName": "音声用ファイル",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -80,
+        64
+      ],
+      "id": "acfa05d8-383f-44f5-b8cf-ce8b890d46b7",
+      "name": "Get row(s) in sheet",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Get row(s) in sheet').item.json['picture name'] }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
+          "mode": "list",
+          "cachedResultName": "音声ファイル",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        800,
+        64
+      ],
+      "id": "ea67fb1d-4007-4d0b-98b9-4cd0f25e47d0",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// =================================================\n// 設定エリア: Google Sheetsのノード名をここに入力\n// =================================================\nconst sheetNodeName = \"Google Sheets1\"; \n\n\n// -------------------------------------------------\n// 処理開始\n// -------------------------------------------------\n\n// 1. ファイル名の取得\n// Execute for Each Itemモードの場合、前のノードのデータも現在のアイテムに対応するものが取れます\nlet fileName = \"generated_image\"; \n\ntry {\n  // $()を使って前のノードのデータを参照\n  // 念のため .item があるか、.json があるかを確認\n  const sheetNode = $(sheetNodeName);\n  if (sheetNode && sheetNode.item && sheetNode.item.json && sheetNode.item.json[\"Filename\"]) {\n    fileName = sheetNode.item.json[\"Filename\"];\n  } else if (sheetNode && sheetNode.json && sheetNode.json[\"Filename\"]) {\n     // バージョンによってはこちらの場合もあります\n     fileName = sheetNode.json[\"Filename\"];\n  }\n} catch (error) {\n  console.log(\"ファイル名取得エラー: デフォルト名を使用します\");\n}\n\n// 2. HTTP Requestの結果から画像データを取得\n// 【ここを修正しました】 items[0] ではなく $input.item を使います\nconst responseData = $input.item.json;\nlet base64String = null;\n\n// 画像データを探す (candidates -> content -> parts -> inlineData)\nif (responseData.candidates && responseData.candidates.length > 0) {\n  const content = responseData.candidates[0].content;\n  \n  if (content && content.parts) {\n    for (const part of content.parts) {\n      if (part.inlineData && part.inlineData.data) {\n        base64String = part.inlineData.data;\n        break; \n      }\n    }\n  }\n}\n\nif (!base64String) {\n  throw new Error(\"画像データが見つかりません。\");\n}\n\n// 3. バイナリ変換\nconst binaryData = Buffer.from(base64String, 'base64');\n\n// 4. 出力 (アイテムごとに返すので配列[]で囲む必要はありません)\nreturn {\n  json: {\n    filename: fileName,\n    message: \"画像変換成功\"\n  },\n  binary: {\n    data: {\n      data: binaryData.toString('base64'),\n      mimeType: 'image/png',\n      fileName: `${fileName}.png`\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        64
+      ],
+      "id": "935db942-a230-4ebc-bd77-a032e7b36206",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=AIzaSyBY1d4ThlKp-sbpGedURG4xWZXbA5Dm6_4",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gemini-2.5-flash-preview-tts\",\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $('Get row(s) in sheet').item.json['音声'] }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"AUDIO\"],\n    \"speechConfig\": {\n      \"voiceConfig\": {\n        \"prebuiltVoiceConfig\": {\n          \"voiceName\": \"Zephyr\"\n        }\n      }\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        -176
+      ],
+      "id": "91afefca-4d1d-42d1-aace-ac91e9301452",
+      "name": "HTTP Request1",
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Gemini TTS のレスポンス JSON\nconst res = $input.item.json;\n\n// Base64 の PCM を取り出す\nconst base64String =\n  res?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;\n\nif (!base64String) {\n  throw new Error(\n    'Gemini TTS の Base64 音声データが見つかりません。\\nレスポンス: ' +\n    JSON.stringify(res, null, 2)\n  );\n}\n\n// Base64 → PCMバイト列\nconst pcmData = Buffer.from(base64String, 'base64');\n\n// ---- ここから WAV のヘッダーを付ける処理 ----\nconst numChannels = 1;\nconst sampleRate = 24000;\nconst bitsPerSample = 16;\n\nconst byteRate = sampleRate * numChannels * (bitsPerSample / 8);\nconst blockAlign = numChannels * (bitsPerSample / 8);\nconst subchunk2Size = pcmData.length;\nconst chunkSize = 36 + subchunk2Size;\n\nconst header = Buffer.alloc(44);\n\n// RIFFヘッダー\nheader.write('RIFF', 0);                    // ChunkID\nheader.writeUInt32LE(chunkSize, 4);         // ChunkSize\nheader.write('WAVE', 8);                    // Format\n\n// fmt チャンク\nheader.write('fmt ', 12);                   // Subchunk1ID\nheader.writeUInt32LE(16, 16);               // Subchunk1Size (PCM)\nheader.writeUInt16LE(1, 20);                // AudioFormat (1 = PCM)\nheader.writeUInt16LE(numChannels, 22);      // NumChannels\nheader.writeUInt32LE(sampleRate, 24);       // SampleRate\nheader.writeUInt32LE(byteRate, 28);         // ByteRate\nheader.writeUInt16LE(blockAlign, 32);       // BlockAlign\nheader.writeUInt16LE(bitsPerSample, 34);    // BitsPerSample\n\n// data チャンク\nheader.write('data', 36);                   // Subchunk2ID\nheader.writeUInt32LE(subchunk2Size, 40);    // Subchunk2Size\n\n// ヘッダー + PCM本体 で WAV データ完成\nconst wavBuffer = Buffer.concat([header, pcmData]);\n\n// n8n に返す\nreturn {\n  binary: {\n    data: {\n      data: wavBuffer,\n      mimeType: 'audio/wav',\n      fileName: 'voice.wav'\n    }\n  },\n  json: res\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -176
+      ],
+      "id": "01104493-47c9-4a96-aee8-84b160bcafdb",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Get row(s) in sheet').item.json['file name'] }}\n",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
+          "mode": "list",
+          "cachedResultName": "音声ファイル",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        800,
+        -176
+      ],
+      "id": "a77f85c2-a9bc-4eba-9563-48d1608c39d3",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        80,
+        64
+      ],
+      "id": "03db5897-3948-4fc4-8a82-fc57c1e30bc8",
+      "name": "Loop Over Items"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-24T11:15:46.270Z",
+      "createdAt": "2025-11-24T11:15:46.270Z",
+      "role": "workflow:owner",
+      "workflowId": "vuu5yw0CVy9lRyzm",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
