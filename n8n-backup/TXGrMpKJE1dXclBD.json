@@ -183,8 +183,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1360,
-        -192
+        688,
+        -176
       ],
       "id": "8de4d26e-847a-4c76-9886-d058d5b3cc7a",
       "name": "Send a message",
@@ -195,6 +195,19 @@
           "name": "Gmail account"
         }
       }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        896,
+        -176
+      ],
+      "id": "10b4c6a5-a752-493e-8848-dfb5492680bd",
+      "name": "AI Agent"
     }
   ],
   "connections": {
@@ -301,6 +314,17 @@
     "Code in JavaScript1": {
       "main": [
         []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
