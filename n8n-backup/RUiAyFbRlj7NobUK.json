@@ -68,13 +68,11 @@
     {
       "parameters": {
         "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}?ref=main\n\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer [REDACTED]"
-            },
             {
               "name": "Accept",
               "value": "application/vnd.github+json"
@@ -97,6 +95,16 @@
       ],
       "id": "44dcea88-15eb-4421-9811-4437d6eda763",
       "name": "GitHub GET",
+      "credentials": {
+        "n8nApi": {
+          "id": "PWQ7iWUX9gX7G09I",
+          "name": "n8n account"
+        },
+        "githubApi": {
+          "id": "kcQOy1Y2pQvP3UzC",
+          "name": "github-n8n-backup"
+        }
+      },
       "onError": "continueRegularOutput"
     },
     {
@@ -162,14 +170,12 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}",
+        "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer [REDACTED]"
-            },
             {
               "name": "Accept",
               "value": "application/vnd.github+json"
@@ -181,26 +187,8 @@
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "message",
-              "value": "={{ $json.putBody.message }}"
-            },
-            {
-              "name": "branch",
-              "value": "={{ $json.putBody.branch }}"
-            },
-            {
-              "name": "content",
-              "value": "={{ $json.putBody.content }}"
-            },
-            {
-              "name": "sha",
-              "value": "={{ $json.putBody.sha }}"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $json.putBody.message }}\",\n  \"content\": \"{{ $json.putBody.content }}\",\n  \"branch\": \"{{ $json.putBody.branch }}\",\n  \"sha\": \"{{ $json.putBody.sha }}\"\n}\n",
         "options": {
           "response": {
             "response": {
@@ -216,19 +204,23 @@
         352
       ],
       "id": "8135356c-a694-4df9-93be-5a212c4c56e2",
-      "name": "PUT UPDATE"
+      "name": "PUT UPDATE",
+      "credentials": {
+        "githubApi": {
+          "id": "kcQOy1Y2pQvP3UzC",
+          "name": "github-n8n-backup"
+        }
+      }
     },
     {
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer [REDACTED]"
-            },
             {
               "name": "Accept",
               "value": "application/vnd.github+json"
@@ -241,7 +233,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"message\": \"backup n8n workflows\",\n  \"content\": \"{{ $json.putBody.content }}\",\n  \"branch\": \"main\"\n}\n\n",
+        "jsonBody": "={\n  \"message\": \"{{ $json.putBody.message }}\",\n  \"content\": \"{{ $json.putBody.content }}\",\n  \"branch\": \"{{ $json.putBody.branch }}\",\n  \"sha\": \"{{ $json.putBody.sha }}\"\n}\n\n\n\n",
         "options": {
           "response": {
             "response": {
@@ -254,10 +246,16 @@
       "typeVersion": 4.3,
       "position": [
         2048,
-        -64
+        -80
       ],
       "id": "00dc767f-3a6c-45d0-8b1a-3e16ddd13cb0",
-      "name": "PUT CREATE"
+      "name": "PUT CREATE",
+      "credentials": {
+        "githubApi": {
+          "id": "kcQOy1Y2pQvP3UzC",
+          "name": "github-n8n-backup"
+        }
+      }
     },
     {
       "parameters": {
