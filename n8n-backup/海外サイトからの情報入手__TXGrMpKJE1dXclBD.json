@@ -1,0 +1,350 @@
+{
+  "id": "TXGrMpKJE1dXclBD",
+  "name": "海外サイトからの情報入手",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -16
+      ],
+      "id": "8ccfd964-3e4e-4adf-9d54-77f6af53aae2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4",
+          "mode": "list",
+          "cachedResultName": "情報調査サイト一覧",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        -16
+      ],
+      "id": "fcd2149b-ddc7-483b-bf3f-c33413e72aac",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        48,
+        -16
+      ],
+      "id": "c893d61c-7385-4bf1-a2b4-ae532eb0783f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        416,
+        208
+      ],
+      "id": "3e84625d-8b81-4825-b459-4c10f7b0f5b6"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Get row(s) in sheet').item.json['RSSフィード'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        0
+      ],
+      "id": "46b48be1-1231-4345-a24e-6250fa27117b",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "pubDate",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        496,
+        0
+      ],
+      "id": "46ea211a-5135-434f-8d31-58791da4706e",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"次のURLのページ内容を読み込み、記事の部分のテキストのみを抽出して、日本語に翻訳してJSON形式で出力してください。\\n\\nURL: {{$json.link}}\\n\\n出力フォーマット:\\n{\\n  \\\"summary\\\": [\\\"...\\\"],\\n  \\\"numbers\\\": [\\n    {\\\"label\\\": \\\"...\\\", \\\"value\\\": 0, \\\"unit\\\": \\\"...\\\", \\\"note\\\": \\\"...\\\"}\\n  ]\\n}\"\n        }\n      ]\n    }\n  ],\n  \"tools\": [\n    {\n      \"url_context\": {}\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "b31557fe-9077-4cfa-b7a7-dbfcdcf5306b",
+      "name": "HTTP Request",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DFFd6i9vv2cgVPir",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        704,
+        0
+      ],
+      "id": "073a7e74-521a-49ee-ac29-751c47ec183c",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 入力: items[] に HTTP Request の各レスポンスオブジェクト\n// 出力: 「1つの記事まとめ(JSON)」ごとに1 item ＋ report文字列\n\nconst out = [];\n\nfor (const item of items) {\n  const root = item.json;\n  const candidates = root.candidates || [];\n\n  for (const cand of candidates) {\n    const parts = cand.content?.parts || [];\n\n    for (const part of parts) {\n      const text = part.text || '';\n      // ```json ～ ``` のコードブロックを探す\n      const match = text.match(/```json([\\s\\S]*?)```/);\n\n      if (!match) continue; // このpartにJSONコードブロックがなければスキップ\n\n      const jsonString = match[1].trim();\n\n      let data;\n      try {\n        data = JSON.parse(jsonString);\n      } catch (e) {\n        // JSONとしてパースできなかったらスキップ\n        continue;\n      }\n\n      // ==== ここからレポート生成ロジック ====\n\n      const title = data.title || ''; // ない場合もあるのでデフォルト\n      const summary = Array.isArray(data.summary) ? data.summary : [];\n      const numbers = Array.isArray(data.numbers) ? data.numbers : [];\n      const insights = Array.isArray(data.insights) ? data.insights : [];\n\n      // URLは urlContextMetadata から拾えることが多い\n      const urlFromMeta =\n        cand.urlContextMetadata?.urlMetadata?.[0]?.retrievedUrl ||\n        root.urlContextMetadata?.urlMetadata?.[0]?.retrievedUrl ||\n        '';\n\n      const url = data.url || urlFromMeta || '';\n\n      const lines = [];\n\n      // タイトル\n      lines.push(`# レポート${title ? `: ${title}` : ''}`);\n      if (url) {\n        lines.push(`URL: ${url}`);\n      }\n\n      // サマリー\n      lines.push('');\n      lines.push('## 1. 概要（サマリー）');\n      if (!summary.length) {\n        lines.push('- サマリー情報はありませんでした。');\n      } else {\n        for (const s of summary) {\n          lines.push(`- ${s}`);\n        }\n      }\n\n      // 数値\n      lines.push('');\n      lines.push('## 2. 重要な数値・指標');\n      if (!numbers.length) {\n        lines.push('（重要な数値情報はありませんでした）');\n      } else {\n        lines.push('| 指標 | 値 | 単位 | 補足 |');\n        lines.push('| ---- | -- | ---- | ---- |');\n        for (const n of numbers) {\n          lines.push(\n            `| ${n.label || ''} | ${n.value ?? ''} | ${n.unit || ''} | ${n.note || ''} |`\n          );\n        }\n      }\n\n      // インサイト（あれば）\n      if (insights.length) {\n        lines.push('');\n        lines.push('## 3. インサイト・示唆');\n        for (const i of insights) {\n          lines.push(`- ${i}`);\n        }\n      }\n\n      const report = lines.join('\\n');\n\n      // このJSON + レポートを1 item として出力\n      out.push({\n        json: {\n          ...data,\n          url,\n          report\n        }\n      });\n    }\n  }\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "deb8369c-b353-487f-99c5-7f3893f2cd66",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = items.map(i => i.json.report);\nconst joined = all.join('\\n\\n---\\n\\n');\n\nreturn [\n  {\n    json: {\n      report: joined\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "6255d11b-62bf-4354-8ba7-ce26a78f23a2",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "sendTo": "h-tada@tfone.co.jp",
+        "subject": "=最新記事レポート",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        -176
+      ],
+      "id": "8de4d26e-847a-4c76-9886-d058d5b3cc7a",
+      "name": "Send a message",
+      "webhookId": "da3755bf-13fe-4249-af49-d7d558586b5a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "okAQQXpPaOuC519I",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        896,
+        -176
+      ],
+      "id": "10b4c6a5-a752-493e-8848-dfb5492680bd",
+      "name": "AI Agent"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-07-01T02:41:08.694Z",
+      "createdAt": "2025-07-01T02:41:08.694Z",
+      "role": "workflow:owner",
+      "workflowId": "TXGrMpKJE1dXclBD",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
