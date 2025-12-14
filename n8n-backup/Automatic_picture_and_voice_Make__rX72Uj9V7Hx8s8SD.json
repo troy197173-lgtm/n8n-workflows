@@ -1,0 +1,27 @@
+{
+  "id": "rX72Uj9V7Hx8s8SD",
+  "name": "Automatic picture and voice Make",
+  "active": false,
+  "isArchived": true,
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-24T09:59:04.558Z",
+      "createdAt": "2025-11-24T09:59:04.558Z",
+      "role": "workflow:owner",
+      "workflowId": "rX72Uj9V7Hx8s8SD",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "tags": []
+}
