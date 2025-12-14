@@ -18,9 +18,9 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://texttospeech.googleapis.com/v1/text:synthesize?key=AIzaSyBnvhbTU69D9Brlz77hX7IdR2Qyw0mhqaQ",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleApi",
+        "url": "https://texttospeech.googleapis.com/v1/text:synthesize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -47,6 +47,10 @@
         "googleApi": {
           "id": "rKIeWR82vBV5zQbG",
           "name": "Google Service Account account 2"
+        },
+        "httpHeaderAuth": {
+          "id": "K1Qcrxjl29WjOvIx",
+          "name": "Header Auth account"
         }
       }
     },
