@@ -205,6 +205,80 @@
       ],
       "id": "a5592f37-44c1-4e70-b66a-4e6a1c9eecdb",
       "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf7bcd4f-1b2a-44ca-8e74-15f061ca2ae6",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "0abcca5f-2d3f-4eeb-aaf8-db1596232252",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "b655e6b9-4b56-41e3-81f2-b4cac1f420bc",
+      "name": "Pick Title & Text"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=あなたは技術記事の翻訳者です。以下の記事を日本語に翻訳してください。\n- 固有名詞（会社名/人名/地名）は原文維持\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\n出力は必ず次のJSON形式のみ（コードブロック禁止）：\n{\n  \"title_ja\": \"...\",\n  \"text_ja\": \"...\"\n}\n\n【原文タイトル】\n{{$json.title}}\n\n【原文本文】\n{{$json.text}}\n\n【URL】\n{{ $('Limit').item.json.link }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "ae5af1bc-893f-4170-9728-310d56940c34",
+      "name": "Translate with Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DFFd6i9vv2cgVPir",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Geminiノードの出力（環境差吸収）\nlet raw =\n  $json.text ??\n  $json.content ??\n  $json.response ??\n  $json.output ??\n  $json.candidates?.[0]?.content ??\n  $json;\n\n// ① raw が「すでにオブジェクト」ならそのまま使う\nlet parsed;\nif (typeof raw === \"object\" && raw !== null) {\n  parsed = raw;\n} else {\n  // ② raw が文字列の場合だけ JSON.parse / match を使う\n  try {\n    parsed = JSON.parse(raw);\n  } catch (e) {\n    const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n    if (!m) {\n      throw new Error(\"Gemini output is not valid JSON\");\n    }\n    parsed = JSON.parse(m[0]);\n  }\n}\n\n// 日本語タイトル・本文\nlet titleJa = parsed.title_ja ?? \"translated\";\nlet textJa  = parsed.text_ja  ?? \"\";\n\n// エスケープ解除（★重要）\ntextJa = String(textJa)\n  .replace(/\\\\n\\\\n/g, \"\\n\\n\")\n  .replace(/\\\\n/g, \"\\n\")\n  .replace(/\\\\\"/g, '\"')\n  .replace(/\\s+\\n/g, \"\\n\")\n  .replace(/\\n{3,}/g, \"\\n\\n\")\n  .trim();\n\n// ファイル名用に安全化\nconst safeTitle = titleJa.replace(/[\\\\/:*?\"<>|]/g, \"_\").slice(0, 120);\nconst date = new Date().toISOString().slice(0, 10);\n\n// txt内容\nconst content = [\n  titleJa,\n  \"\",\n  \"================================\",\n  \"\",\n  textJa,\n  \"\"\n].join(\"\\n\");\n\nreturn [{\n  filename: `${date}_${safeTitle}.txt`,\n  content\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "56842a51-53ba-46ad-a1bb-ce70a75c70ae",
+      "name": "Build TXT"
     }
   ],
   "connections": {
@@ -311,6 +385,39 @@
     "Code in JavaScript1": {
       "main": [
         []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Pick Title & Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Title & Text": {
+      "main": [
+        [
+          {
+            "node": "Translate with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Build TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
