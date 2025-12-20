@@ -279,6 +279,52 @@
       ],
       "id": "56842a51-53ba-46ad-a1bb-ce70a75c70ae",
       "name": "Build TXT"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "0de1f6e7-0e16-4abb-9a5f-63cd0c13b705",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1888,
+        0
+      ],
+      "id": "ddec4b14-382e-424b-b06d-3fd443796120",
+      "name": "Convert to text file"
     }
   ],
   "connections": {
@@ -414,6 +460,28 @@
         [
           {
             "node": "Build TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TXT": {
+      "main": [
+        [
+          {
+            "node": "Convert to text file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to text file": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
             "type": "main",
             "index": 0
           }
