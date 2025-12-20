@@ -122,8 +122,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        896,
-        0
+        832,
+        -288
       ],
       "id": "b31557fe-9077-4cfa-b7a7-dbfcdcf5306b",
       "name": "HTTP Request",
@@ -141,7 +141,7 @@
       "type": "n8n-nodes-base.limit",
       "typeVersion": 1,
       "position": [
-        704,
+        720,
         0
       ],
       "id": "073a7e74-521a-49ee-ac29-751c47ec183c",
@@ -154,8 +154,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        0
+        992,
+        -288
       ],
       "id": "deb8369c-b353-487f-99c5-7f3893f2cd66",
       "name": "Code in JavaScript"
@@ -167,11 +167,44 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1264,
-        0
+        1136,
+        -304
       ],
       "id": "6255d11b-62bf-4354-8ba7-ce26a78f23a2",
       "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://readability-api:3000/extract",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        928,
+        0
+      ],
+      "id": "a5592f37-44c1-4e70-b66a-4e6a1c9eecdb",
+      "name": "HTTP Request1"
     }
   ],
   "connections": {
@@ -246,7 +279,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "HTTP Request1",
             "type": "main",
             "index": 0
           }
