@@ -425,6 +425,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
+  "activeVersionId": "60e9f837-9ac0-448f-afbb-64d0708e312b",
   "triggerCount": 1,
   "shared": [
     {
@@ -435,5 +436,429 @@
       "projectId": "dEuNNMB3JR1LXOMn"
     }
   ],
+  "activeVersion": {
+    "updatedAt": "2025-12-21T07:27:37.940Z",
+    "createdAt": "2025-12-21T07:27:37.940Z",
+    "versionId": "60e9f837-9ac0-448f-afbb-64d0708e312b",
+    "workflowId": "RUiAyFbRlj7NobUK",
+    "nodes": [
+      {
+        "parameters": {
+          "triggerTimes": {
+            "item": [
+              {
+                "mode": "everyHour",
+                "minute": 59
+              }
+            ]
+          }
+        },
+        "name": "Daily at 23:59",
+        "type": "n8n-nodes-base.cron",
+        "position": [
+          240,
+          240
+        ],
+        "typeVersion": 1,
+        "id": "7acfd385-9727-4957-a19e-8aed684cf6fa"
+      },
+      {
+        "parameters": {
+          "url": "https://n8n.srv888167.hstgr.cloud/api/v1/workflows",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "n8nApi",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          400,
+          240
+        ],
+        "id": "1d2e0ab1-bb98-4e0a-9cfd-f264eba9d4b0",
+        "name": "HTTP Request",
+        "credentials": {
+          "n8nApi": {
+            "id": "PWQ7iWUX9gX7G09I",
+            "name": "n8n account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// 入力が { data: [ ... ] } の1件想定\nconst workflows = Array.isArray($json.data)\n  ? $json.data\n  : items.map(i => i.json);\n\n// GitHubトークン等のマスク\nconst patterns = [\n  /github_pat_[A-Za-z0-9_]+/g,\n  /gh[pousr]_[A-Za-z0-9]{20,}/g,\n  /GITHUB_TOKEN(_V2)?[A-Za-z0-9_\\-]{10,}/g,\n];\n\n// ファイル名として安全な文字だけにする関数\nfunction safeName(name) {\n  return String(name || 'unnamed')\n    .replace(/[\\\\/:*?\"<>|]/g, \"_\") // NG文字\n    .replace(/\\s+/g, \"_\")          // 空白→_\n    .replace(/_+/g, \"_\")           // 連続_整理\n    .slice(0, 80);                 // 長さ制限\n}\n\n// 1 workflow = 1 item（= 1ファイル）\nreturn workflows.map(wf => {\n  const copy = { ...wf };\n\n  // 差分が出やすい/不要な項目は削除\n  delete copy.updatedAt;\n  delete copy.createdAt;\n  delete copy.versionId;\n\n  let text = JSON.stringify(copy, null, 2);\n  for (const re of patterns) {\n    text = text.replace(re, \"[REDACTED]\");\n  }\n\n  const fileName = `${safeName(copy.name)}__${copy.id}.json`;\n\n  return {\n    json: {\n      path: `n8n-backup/${fileName}`,\n      contentBase64: Buffer.from(text, \"utf8\").toString(\"base64\"),\n      workflowName: copy.name,\n      workflowId: copy.id,\n    }\n  };\n});\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          608,
+          240
+        ],
+        "id": "af32793e-fe1f-4ff6-b6ef-cf266f31db84",
+        "name": "Code in JavaScript1"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}?ref=main\n\n",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1200,
+          240
+        ],
+        "id": "44dcea88-15eb-4421-9811-4437d6eda763",
+        "name": "GitHub GET",
+        "credentials": {
+          "n8nApi": {
+            "id": "PWQ7iWUX9gX7G09I",
+            "name": "n8n account"
+          },
+          "githubApi": {
+            "id": "kcQOy1Y2pQvP3UzC",
+            "name": "github-n8n-backup"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "031686c4-8e92-460e-a29d-2f5fe5c9657f",
+                "leftValue": "={{$json.noChange}}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1616,
+          240
+        ],
+        "id": "325e3378-8005-4ba0-9927-092ad2f5da93",
+        "name": "If no change"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Diff & Build PUT (robust)\n// - path/contentBase64 は「現在のループ中アイテム」から取る\n// - GitHub GET (fullResponse=true, continueOnFail=true) の結果は $json.statusCode / $json.body にある前提\n\n// 0) まずは現在アイテム($json)に path/contentBase64 が残っているか確認\nlet path = $json.path;\nlet newB64 = $json.contentBase64;\n\n// 1) 無ければ、SplitInBatches(Loop Over Items) の「今のアイテム」から拾う\n//    ※ あなたのノード名が \"Loop Over Items\" の前提\nif (!path || !newB64) {\n  const loopItem = $('Loop Over Items').item?.json;\n  if (!path) path = loopItem?.path;\n  if (!newB64) newB64 = loopItem?.contentBase64;\n}\n\n// 2) それでも無ければ、Code in JavaScript1 の「今のアイテム」から拾う（保険）\n//    ※ first() は使わない。item を使う\nif (!path || !newB64) {\n  const src = $('Code in JavaScript1').item?.json;\n  if (!path) path = src?.path;\n  if (!newB64) newB64 = src?.contentBase64;\n}\n\n// 3) 最終チェック\nif (typeof path !== 'string' || !path) {\n  throw new Error('path is missing on input item');\n}\nif (typeof newB64 !== 'string' || !newB64) {\n  throw new Error(`contentBase64 is missing for path=${path}`);\n}\n\n// 4) GitHub GET の結果取り出し\nconst statusCode = Number($json.statusCode);\nconst body = $json.body ?? null;\n\n// 200: exists, 404: not exists\nconst exists = statusCode === 200;\nconst sha = exists ? body?.sha : undefined;\n\n// GitHubのcontentは改行が混ざるので除去\nconst oldB64 = exists\n  ? String(body?.content ?? '').replace(/[\\r\\n\\s]/g, '')\n  : '';\n\n// 5) 変更有無（テキスト比較）\nlet noChange = false;\nif (exists && oldB64) {\n  const newText = Buffer.from(newB64, 'base64').toString('utf8');\n  const oldText = Buffer.from(oldB64, 'base64').toString('utf8');\n  noChange = (newText === oldText);\n}\n\n// 6) PUT用ボディ（shaは存在時のみ）\nconst putBody = {\n  message: 'backup n8n workflows',\n  content: newB64,\n  branch: 'main',\n};\nif (sha) putBody.sha = sha;\n\nreturn [\n  {\n    json: {\n      path,\n      exists,\n      noChange,\n      putBody,\n      statusCode,\n    },\n  },\n];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1408,
+          240
+        ],
+        "id": "e8d7fbc7-0e8f-4fd8-a346-b2bbc1bab4c5",
+        "name": "Diff & Build PUT"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          816,
+          240
+        ],
+        "id": "57f7814e-656f-4a1d-9891-9a4d08dcf756",
+        "name": "Loop Over Items"
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}\n",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"message\": \"{{ $json.putBody.message }}\",\n  \"content\": \"{{ $json.putBody.content }}\",\n  \"branch\": \"{{ $json.putBody.branch }}\",\n  \"sha\": \"{{ $json.putBody.sha }}\"\n}\n",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2048,
+          352
+        ],
+        "id": "8135356c-a694-4df9-93be-5a212c4c56e2",
+        "name": "PUT UPDATE",
+        "credentials": {
+          "githubApi": {
+            "id": "kcQOy1Y2pQvP3UzC",
+            "name": "github-n8n-backup"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "=https://api.github.com/repos/troy197173-lgtm/n8n-workflows/contents/{{$json.path}}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "githubApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"message\": \"{{ $json.putBody.message }}\",\n  \"content\": \"{{ $json.putBody.content }}\",\n  \"branch\": \"{{ $json.putBody.branch }}\",\n  \"sha\": \"{{ $json.putBody.sha }}\"\n}\n\n\n\n",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2048,
+          -80
+        ],
+        "id": "00dc767f-3a6c-45d0-8b1a-3e16ddd13cb0",
+        "name": "PUT CREATE",
+        "credentials": {
+          "githubApi": {
+            "id": "kcQOy1Y2pQvP3UzC",
+            "name": "github-n8n-backup"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "2bd3ad34-68cf-4b0e-8730-a7b1feb7efee",
+                "leftValue": "={{ $('GitHub GET').item.json.error.status }}",
+                "rightValue": 404,
+                "operator": {
+                  "type": "number",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1808,
+          256
+        ],
+        "id": "1ad2d794-38e6-401b-95fa-ea9c1f6cafe7",
+        "name": "If"
+      }
+    ],
+    "connections": {
+      "Daily at 23:59": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript1": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub GET": {
+        "main": [
+          [
+            {
+              "node": "Diff & Build PUT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Diff & Build PUT": {
+        "main": [
+          [
+            {
+              "node": "If no change",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If no change": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [],
+          [
+            {
+              "node": "GitHub GET",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PUT CREATE": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "PUT CREATE",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "PUT UPDATE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PUT UPDATE": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "system migration",
+    "name": null,
+    "description": null
+  },
   "tags": []
 }
