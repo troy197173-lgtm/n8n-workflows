@@ -63,17 +63,6 @@
       "name": "Loop Over Items"
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.noOp",
-      "name": "Replace Me",
-      "typeVersion": 1,
-      "position": [
-        416,
-        208
-      ],
-      "id": "3e84625d-8b81-4825-b459-4c10f7b0f5b6"
-    },
-    {
       "parameters": {
         "url": "={{ $('Get row(s) in sheet').item.json['RSSフィード'] }}",
         "options": {}
@@ -269,7 +258,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Geminiノードの出力（環境差吸収）\nlet raw =\n  $json.text ??\n  $json.content ??\n  $json.response ??\n  $json.output ??\n  $json.candidates?.[0]?.content ??\n  $json;\n\n// ① raw が「すでにオブジェクト」ならそのまま使う\nlet parsed;\nif (typeof raw === \"object\" && raw !== null) {\n  parsed = raw;\n} else {\n  // ② raw が文字列の場合だけ JSON.parse / match を使う\n  try {\n    parsed = JSON.parse(raw);\n  } catch (e) {\n    const m = String(raw).match(/\\{[\\s\\S]*\\}/);\n    if (!m) {\n      throw new Error(\"Gemini output is not valid JSON\");\n    }\n    parsed = JSON.parse(m[0]);\n  }\n}\n\n// 日本語タイトル・本文\nlet titleJa = parsed.title_ja ?? \"translated\";\nlet textJa  = parsed.text_ja  ?? \"\";\n\n// エスケープ解除（★重要）\ntextJa = String(textJa)\n  .replace(/\\\\n\\\\n/g, \"\\n\\n\")\n  .replace(/\\\\n/g, \"\\n\")\n  .replace(/\\\\\"/g, '\"')\n  .replace(/\\s+\\n/g, \"\\n\")\n  .replace(/\\n{3,}/g, \"\\n\\n\")\n  .trim();\n\n// ファイル名用に安全化\nconst safeTitle = titleJa.replace(/[\\\\/:*?\"<>|]/g, \"_\").slice(0, 120);\nconst date = new Date().toISOString().slice(0, 10);\n\n// txt内容\nconst content = [\n  titleJa,\n  \"\",\n  \"================================\",\n  \"\",\n  textJa,\n  \"\"\n].join(\"\\n\");\n\nreturn [{\n  filename: `${date}_${safeTitle}.txt`,\n  content\n}];\n"
+        "jsCode": "// 入力は複数 items（例: 5件）なので $input.all() で全部取得\nconst items = $input.all();\n\n// 仕切り線（見やすい長さ）\nconst sep = \"\\n\" + \"=\".repeat(80) + \"\\n\";\nconst subSep = \"\\n\" + \"-\".repeat(80) + \"\\n\";\n\n// 各記事を整形して連結\nconst blocks = items.map((item, idx) => {\n  // Geminiの出力は content.parts[0].text に入っている（あなたの環境で確定）\n  let raw = item.json.content?.parts?.[0]?.text ?? \"\";\n  raw = String(raw);\n\n  // ```json``` を除去して JSON を抜き出す\n  raw = raw.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n  const first = raw.indexOf(\"{\");\n  const last = raw.lastIndexOf(\"}\");\n  if (first === -1 || last === -1 || last <= first) {\n    // 失敗時でも他の記事は続ける\n    return [\n      `【${idx + 1}/${items.length}】(parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  let parsed;\n  try {\n    parsed = JSON.parse(raw.slice(first, last + 1));\n  } catch (e) {\n    return [\n      `【${idx + 1}/${items.length}】(json parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  const titleJa = parsed.title_ja ?? \"(no title)\";\n  let textJa = String(parsed.text_ja ?? \"\");\n\n  // 改行エスケープ復元（必要な場合のみ効く）\n  textJa = textJa\n    .replace(/\\\\n\\\\n/g, \"\\n\\n\")\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .trim();\n\n  // URLも入れたいなら（Readability由来の url が残っている場合）\n  const url = item.json.url ?? item.json.link ?? \"\";\n\n  return [\n    `【${idx + 1}/${items.length}】${titleJa}`,\n    url ? `URL: ${url}` : null,\n    subSep,\n    textJa,\n  ].filter(Boolean).join(\"\\n\");\n});\n\n// まとめファイルの内容\nconst now = new Date();\nconst date = now.toISOString().slice(0, 10);\nconst content = [\n  `翻訳まとめ（${date}）`,\n  `件数: ${items.length}`,\n  sep,\n  blocks.join(sep),\n  \"\\n\"\n].join(\"\\n\");\n\n// まとめファイル名\nconst filename = `${date}_translated_bundle_${items.length}items.txt`;\n\n// ★重要：Run Once for All Items の場合も「配列」で返す\nreturn [{\n  filename,\n  content\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -282,7 +271,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $json.filename }}",
+        "name": "={{ $('Build TXT').item.json.filename }}",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -290,9 +279,10 @@
         },
         "folderId": {
           "__rl": true,
+          "value": "1xVlUBVP6KZ_B5w7nBJ0nZ3uMxo0Ph3jn",
           "mode": "list",
-          "value": "root",
-          "cachedResultName": "/ (Root folder)"
+          "cachedResultName": "海外記事からの情報取り込み",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1xVlUBVP6KZ_B5w7nBJ0nZ3uMxo0Ph3jn"
         },
         "options": {}
       },
@@ -356,17 +346,6 @@
         [
           {
             "node": "RSS Read",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Replace Me": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -482,6 +461,17 @@
         [
           {
             "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
