@@ -1,0 +1,424 @@
+{
+  "id": "EDNpWBJgO5HtpeC1",
+  "name": "海外サイトから画像付きで情報入手",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "078d597e-3c6e-4fa9-94f8-fe74940dab98",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4",
+          "mode": "list",
+          "cachedResultName": "情報調査サイト一覧",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Wkp3PxbXf9VC9ERr4BR1z93RM0RiCFzgJ3WWCSQ6mG4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        64,
+        0
+      ],
+      "id": "06edd7b3-6a9f-445d-a598-fcb354715b8c",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        272,
+        0
+      ],
+      "id": "d3c74464-b6ee-4d4b-8751-386ce9c6c1cb",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Get row(s) in sheet').item.json['RSSフィード'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        16
+      ],
+      "id": "49e71e48-a696-4116-80c0-0f4de6399c35",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "pubDate",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        720,
+        16
+      ],
+      "id": "b96a2727-f8c8-4b01-b783-412db05d2cd9",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        944,
+        16
+      ],
+      "id": "27da26d5-67a5-466c-8489-a9dda3d2ac92",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://readability-api:3000/extract",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1152,
+        16
+      ],
+      "id": "0fa8edbb-ca4c-45ad-b7c9-5b11feb3ef16",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf7bcd4f-1b2a-44ca-8e74-15f061ca2ae6",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "0abcca5f-2d3f-4eeb-aaf8-db1596232252",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        16
+      ],
+      "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
+      "name": "Pick Title & Text"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=あなたは技術記事の翻訳者兼記事のライターです。以下の記事を日本語に翻訳して、わかりやすく記事にしてください。原文に無い内容は加えないでください。ただ文章として理解しにくいところは読みやすくしてください。またアルファベットの名前は日本人に屋読みにくいのでローマ字のカタカナ表記にしてください。\n\n- 固有名詞（会社名/人名/地名）は原文維持\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\n出力は必ず次のJSON形式のみ（コードブロック禁止）：\n{\n  \"title_ja\": \"...\",\n  \"text_ja\": \"...\"\n}\n\n【原文タイトル】\n{{$json.title}}\n\n【原文本文】\n{{$json.text}}\n\n【URL】\n{{ $('Limit').item.json.link }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        16
+      ],
+      "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
+      "name": "Translate with Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DFFd6i9vv2cgVPir",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 入力は複数 items（例: 5件）なので $input.all() で全部取得\nconst items = $input.all();\n\n// 仕切り線（見やすい長さ）\nconst sep = \"\\n\" + \"=\".repeat(80) + \"\\n\";\nconst subSep = \"\\n\" + \"-\".repeat(80) + \"\\n\";\n\n// 各記事を整形して連結\nconst blocks = items.map((item, idx) => {\n  // Geminiの出力は content.parts[0].text に入っている（あなたの環境で確定）\n  let raw = item.json.content?.parts?.[0]?.text ?? \"\";\n  raw = String(raw);\n\n  // ```json``` を除去して JSON を抜き出す\n  raw = raw.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n  const first = raw.indexOf(\"{\");\n  const last = raw.lastIndexOf(\"}\");\n  if (first === -1 || last === -1 || last <= first) {\n    // 失敗時でも他の記事は続ける\n    return [\n      `【${idx + 1}/${items.length}】(parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  let parsed;\n  try {\n    parsed = JSON.parse(raw.slice(first, last + 1));\n  } catch (e) {\n    return [\n      `【${idx + 1}/${items.length}】(json parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  const titleJa = parsed.title_ja ?? \"(no title)\";\n  let textJa = String(parsed.text_ja ?? \"\");\n\n  // 改行エスケープ復元（必要な場合のみ効く）\n  textJa = textJa\n    .replace(/\\\\n\\\\n/g, \"\\n\\n\")\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .trim();\n\n  // URLも入れたいなら（Readability由来の url が残っている場合）\n  const url = item.json.url ?? item.json.link ?? \"\";\n\n  return [\n    `【${idx + 1}/${items.length}】${titleJa}`,\n    url ? `URL: ${url}` : null,\n    subSep,\n    textJa,\n  ].filter(Boolean).join(\"\\n\");\n});\n\n// まとめファイルの内容\nconst now = new Date();\nconst date = now.toISOString().slice(0, 10);\nconst content = [\n  `翻訳まとめ（${date}）`,\n  `件数: ${items.length}`,\n  sep,\n  blocks.join(sep),\n  \"\\n\"\n].join(\"\\n\");\n\n// まとめファイル名\nconst filename = `${date}_translated_bundle_${items.length}items.txt`;\n\n// ★重要：Run Once for All Items の場合も「配列」で返す\nreturn [{\n  filename,\n  content\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        16
+      ],
+      "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
+      "name": "Build TXT"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Build TXT').item.json.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1xVlUBVP6KZ_B5w7nBJ0nZ3uMxo0Ph3jn",
+          "mode": "list",
+          "cachedResultName": "海外記事からの情報取り込み",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1xVlUBVP6KZ_B5w7nBJ0nZ3uMxo0Ph3jn"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2320,
+        16
+      ],
+      "id": "ada0a324-9e9b-4671-a1cd-50a78c47d73a",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        16
+      ],
+      "id": "fc8d6b21-d577-4cd9-a674-a9c78eaee210",
+      "name": "Convert to text file"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Pick Title & Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Title & Text": {
+      "main": [
+        [
+          {
+            "node": "Translate with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Build TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TXT": {
+      "main": [
+        [
+          {
+            "node": "Convert to text file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to text file": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-23T07:23:04.792Z",
+      "createdAt": "2025-11-23T07:23:04.792Z",
+      "role": "workflow:owner",
+      "workflowId": "EDNpWBJgO5HtpeC1",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
