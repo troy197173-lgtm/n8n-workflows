@@ -216,6 +216,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
+  "activeVersionId": null,
   "triggerCount": 1,
   "shared": [
     {
@@ -226,5 +227,6 @@
       "projectId": "dEuNNMB3JR1LXOMn"
     }
   ],
+  "activeVersion": null,
   "tags": []
 }
