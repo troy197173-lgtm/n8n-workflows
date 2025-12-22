@@ -137,8 +137,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1152,
-        16
+        1120,
+        -208
       ],
       "id": "0fa8edbb-ca4c-45ad-b7c9-5b11feb3ef16",
       "name": "HTTP Request1"
@@ -166,8 +166,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1360,
-        16
+        1824,
+        -304
       ],
       "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
       "name": "Pick Title & Text"
@@ -192,8 +192,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1568,
-        16
+        2032,
+        -160
       ],
       "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
       "name": "Translate with Gemini",
@@ -211,8 +211,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1920,
-        16
+        2432,
+        -176
       ],
       "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
       "name": "Build TXT"
@@ -237,8 +237,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2320,
-        16
+        2560,
+        48
       ],
       "id": "ada0a324-9e9b-4671-a1cd-50a78c47d73a",
       "name": "Upload file",
@@ -258,11 +258,126 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        2112,
-        16
+        2368,
+        32
       ],
       "id": "fc8d6b21-d577-4cd9-a674-a9c78eaee210",
       "name": "Convert to text file"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://readability-api:3000/extract",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1152,
+        16
+      ],
+      "id": "60b9c24f-2fde-4cd5-8dbe-ee9c22abac70",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "content",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "src_images",
+              "cssSelector": "img",
+              "returnValue": "attribute",
+              "attribute": "src",
+              "returnArray": true
+            },
+            {
+              "key": "data_images",
+              "cssSelector": "img",
+              "returnValue": "attribute",
+              "attribute": "data-src",
+              "returnArray": true
+            },
+            {
+              "key": "srcset_images",
+              "cssSelector": "img",
+              "returnValue": "attribute",
+              "attribute": "srcset",
+              "returnArray": true
+            },
+            {
+              "key": "srcset_images",
+              "cssSelector": "img",
+              "returnValue": "attribute",
+              "attribute": "data-srcset",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        16
+      ],
+      "id": "1e72e0f2-4219-42fe-a1af-c0943e85a579",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=あなたはプロのWeb編集者です。提供されたURLリストから、記事のメインアイキャッチ画像として最適なものを1つだけ選出してください。\n\n【選定ルール】\n\ndata:image/ で始まるベース64形式のダミー画像は除外してください。\n\n「hitachi」「cvent」「advertise」「logo」など、広告やサイトロゴと思われるURLは除外してください。\n\n記事タイトル（{{ $('HTTP Request').item.json.title }}）の内容を最もよく表している画像URLを優先してください。\n\n【出力形式】\n\nURLのみを出力してください。\n\n解説、挨拶、Markdownタグ（![]()など）は一切含めないでください。\n\n【入力リスト】 {{ $json.data_images }}"
+            }
+          ]
+        },
+        "options": {
+          "maxOutputTokens": 1000,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        -64
+      ],
+      "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DFFd6i9vv2cgVPir",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     }
   ],
   "connections": {
@@ -326,7 +441,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request1",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
@@ -335,13 +450,7 @@
     },
     "HTTP Request1": {
       "main": [
-        [
-          {
-            "node": "Pick Title & Text",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Pick Title & Text": {
@@ -393,6 +502,28 @@
         [
           {
             "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
             "type": "main",
             "index": 0
           }
