@@ -166,8 +166,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1824,
-        -304
+        1888,
+        16
       ],
       "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
       "name": "Pick Title & Text"
@@ -192,8 +192,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        2032,
-        -160
+        2048,
+        -96
       ],
       "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
       "name": "Translate with Gemini",
@@ -367,8 +367,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1520,
-        -64
+        1552,
+        16
       ],
       "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
       "name": "Message a model",
@@ -515,6 +515,11 @@
             "node": "HTML",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Pick Title & Text",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -524,6 +529,17 @@
         [
           {
             "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Pick Title & Text",
             "type": "main",
             "index": 0
           }
