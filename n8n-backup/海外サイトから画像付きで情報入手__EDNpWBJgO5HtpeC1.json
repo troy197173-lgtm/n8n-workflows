@@ -150,13 +150,13 @@
             {
               "id": "bf7bcd4f-1b2a-44ca-8e74-15f061ca2ae6",
               "name": "title",
-              "value": "={{ $json.title }}",
+              "value": "={{ $('HTTP Request').item.json.title }}",
               "type": "string"
             },
             {
               "id": "0abcca5f-2d3f-4eeb-aaf8-db1596232252",
               "name": "text",
-              "value": "={{ $json.text }}",
+              "value": "={{ $('HTTP Request').item.json.text }}",
               "type": "string"
             }
           ]
@@ -166,7 +166,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1888,
+        2096,
         16
       ],
       "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
@@ -192,8 +192,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        2048,
-        -96
+        2368,
+        -240
       ],
       "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
       "name": "Translate with Gemini",
@@ -211,7 +211,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2432,
+        2640,
         -176
       ],
       "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
@@ -237,7 +237,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2560,
+        2768,
         48
       ],
       "id": "ada0a324-9e9b-4671-a1cd-50a78c47d73a",
@@ -258,7 +258,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        2368,
+        2576,
         32
       ],
       "id": "fc8d6b21-d577-4cd9-a674-a9c78eaee210",
@@ -338,7 +338,7 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        1360,
+        1392,
         16
       ],
       "id": "1e72e0f2-4219-42fe-a1af-c0943e85a579",
@@ -367,8 +367,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1552,
-        16
+        1648,
+        -48
       ],
       "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
       "name": "Message a model",
@@ -513,11 +513,6 @@
         [
           {
             "node": "HTML",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Pick Title & Text",
             "type": "main",
             "index": 0
           }
