@@ -211,8 +211,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2352,
-        16
+        2416,
+        -352
       ],
       "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
       "name": "Build TXT"
@@ -378,6 +378,19 @@
           "name": "Google Gemini(PaLM) Api account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 全ての入力アイテム（5つの記事）を取得\nconst items = $input.all();\n\n// 2. 最終的なマークダウンを格納する変数\nlet combinedMarkdown = \"\";\n\n// 3. 各記事（アイテム）をループ処理\nitems.forEach((item, index) => {\n  \n  if (item.json.content && item.json.content.parts) {\n    \n    // 記事内のバラバラなパーツ（タイトル、画像、本文）を一つに結合\n    // 各パーツの間に適度な改行を入れる\n    let articleText = item.json.content.parts\n      .map(part => part.text)\n      .join(\"\\n\\n\"); \n\n    // 記事と記事の間に水平線を入れる（2つ目以降の記事の「前」に挿入）\n    if (index > 0) {\n      combinedMarkdown += \"\\n\\n---\\n\\n\"; \n    }\n\n    // 記事の内容を追加\n    combinedMarkdown += articleText;\n  }\n});\n\n// 4. \\n という文字列を実際の改行に変換し、全体の体裁を整える\ncombinedMarkdown = combinedMarkdown\n  .replace(/\\\\n/g, '\\n') // エスケープされた改行を本物の改行へ\n  .replace(/\\n{3,}/g, '\\n\\n') // 3つ以上の連続改行を2つに整理（美観のため）\n  .trim();\n\n// 5. 1つのアイテムとして出力\nreturn {\n  full_markdown: combinedMarkdown,\n  file_name: \"combined_articles.md\",\n  article_count: items.length\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        16
+      ],
+      "id": "a553aa7a-30b1-4216-834c-a4bf3db40d02",
+      "name": "Code in JavaScript"
     }
   ],
   "connections": {
@@ -468,7 +481,7 @@
       "main": [
         [
           {
-            "node": "Build TXT",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -477,13 +490,7 @@
     },
     "Build TXT": {
       "main": [
-        [
-          {
-            "node": "Convert to text file",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Upload file": {
