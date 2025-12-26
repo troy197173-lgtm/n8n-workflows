@@ -112,39 +112,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://readability-api:3000/extract",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "url",
-              "value": "={{ $json.link }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        1120,
-        -208
-      ],
-      "id": "0fa8edbb-ca4c-45ad-b7c9-5b11feb3ef16",
-      "name": "HTTP Request1"
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -206,20 +173,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 入力は複数 items（例: 5件）なので $input.all() で全部取得\nconst items = $input.all();\n\n// 仕切り線（見やすい長さ）\nconst sep = \"\\n\" + \"=\".repeat(80) + \"\\n\";\nconst subSep = \"\\n\" + \"-\".repeat(80) + \"\\n\";\n\n// 各記事を整形して連結\nconst blocks = items.map((item, idx) => {\n  // Geminiの出力は content.parts[0].text に入っている（あなたの環境で確定）\n  let raw = item.json.content?.parts?.[0]?.text ?? \"\";\n  raw = String(raw);\n\n  // ```json``` を除去して JSON を抜き出す\n  raw = raw.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n  const first = raw.indexOf(\"{\");\n  const last = raw.lastIndexOf(\"}\");\n  if (first === -1 || last === -1 || last <= first) {\n    // 失敗時でも他の記事は続ける\n    return [\n      `【${idx + 1}/${items.length}】(parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  let parsed;\n  try {\n    parsed = JSON.parse(raw.slice(first, last + 1));\n  } catch (e) {\n    return [\n      `【${idx + 1}/${items.length}】(json parse error)`,\n      subSep,\n      raw.slice(0, 500),\n    ].join(\"\\n\");\n  }\n\n  const titleJa = parsed.title_ja ?? \"(no title)\";\n  let textJa = String(parsed.text_ja ?? \"\");\n\n  // 改行エスケープ復元（必要な場合のみ効く）\n  textJa = textJa\n    .replace(/\\\\n\\\\n/g, \"\\n\\n\")\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .trim();\n\n  // URLも入れたいなら（Readability由来の url が残っている場合）\n  const url = item.json.url ?? item.json.link ?? \"\";\n\n  return [\n    `【${idx + 1}/${items.length}】${titleJa}`,\n    url ? `URL: ${url}` : null,\n    subSep,\n    textJa,\n  ].filter(Boolean).join(\"\\n\");\n});\n\n// まとめファイルの内容\nconst now = new Date();\nconst date = now.toISOString().slice(0, 10);\nconst content = [\n  `翻訳まとめ（${date}）`,\n  `件数: ${items.length}`,\n  sep,\n  blocks.join(sep),\n  \"\\n\"\n].join(\"\\n\");\n\n// まとめファイル名\nconst filename = `${date}_translated_bundle_${items.length}items.txt`;\n\n// ★重要：Run Once for All Items の場合も「配列」で返す\nreturn [{\n  filename,\n  content\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2416,
-        -352
-      ],
-      "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
-      "name": "Build TXT"
-    },
-    {
-      "parameters": {
-        "name": "={{ $('Build TXT').item.json.filename }}",
+        "name": "={{ $('Get row(s) in sheet').first().json['ファイルネーム'] }}_{{ $now.format('yyyy-MM-dd_HHmm') }}.md",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -237,8 +191,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2768,
-        48
+        2752,
+        32
       ],
       "id": "ada0a324-9e9b-4671-a1cd-50a78c47d73a",
       "name": "Upload file",
@@ -248,21 +202,6 @@
           "name": "Google Drive account 2"
         }
       }
-    },
-    {
-      "parameters": {
-        "operation": "toText",
-        "sourceProperty": "content",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        2576,
-        32
-      ],
-      "id": "fc8d6b21-d577-4cd9-a674-a9c78eaee210",
-      "name": "Convert to text file"
     },
     {
       "parameters": {
@@ -381,7 +320,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. 全ての入力アイテム（5つの記事）を取得\nconst items = $input.all();\n\n// 2. 最終的なマークダウンを格納する変数\nlet combinedMarkdown = \"\";\n\n// 3. 各記事（アイテム）をループ処理\nitems.forEach((item, index) => {\n  \n  if (item.json.content && item.json.content.parts) {\n    \n    // 記事内のバラバラなパーツ（タイトル、画像、本文）を一つに結合\n    // 各パーツの間に適度な改行を入れる\n    let articleText = item.json.content.parts\n      .map(part => part.text)\n      .join(\"\\n\\n\"); \n\n    // 記事と記事の間に水平線を入れる（2つ目以降の記事の「前」に挿入）\n    if (index > 0) {\n      combinedMarkdown += \"\\n\\n---\\n\\n\"; \n    }\n\n    // 記事の内容を追加\n    combinedMarkdown += articleText;\n  }\n});\n\n// 4. \\n という文字列を実際の改行に変換し、全体の体裁を整える\ncombinedMarkdown = combinedMarkdown\n  .replace(/\\\\n/g, '\\n') // エスケープされた改行を本物の改行へ\n  .replace(/\\n{3,}/g, '\\n\\n') // 3つ以上の連続改行を2つに整理（美観のため）\n  .trim();\n\n// 5. 1つのアイテムとして出力\nreturn {\n  full_markdown: combinedMarkdown,\n  file_name: \"combined_articles.md\",\n  article_count: items.length\n};"
+        "jsCode": "const items = $input.all();\nlet combinedMarkdown = \"\";\n\nitems.forEach((item, index) => {\n  if (item.json.content && item.json.content.parts) {\n    // パーツを結合（ここで一旦 \\n 文字が含まれた状態になる）\n    let articleText = item.json.content.parts\n      .map(part => part.text)\n      .join(\"\\n\\n\"); \n\n    if (index > 0) {\n      combinedMarkdown += \"\\n\\n---\\n\\n\"; \n    }\n    combinedMarkdown += articleText;\n  }\n});\n\n// ★最重要★ 文字列としての \"\\\\n\" を、物理的な改行 \"\\n\" に一括置換します\ncombinedMarkdown = combinedMarkdown.replace(/\\\\n/g, '\\n');\n\n// 念のため、余計な空白をトリミング\ncombinedMarkdown = combinedMarkdown.trim();\n\nreturn {\n  full_markdown: combinedMarkdown,\n  article_count: items.length\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -391,6 +330,23 @@
       ],
       "id": "a553aa7a-30b1-4216-834c-a4bf3db40d02",
       "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "full_markdown",
+        "options": {
+          "fileName": "combined_articles.md"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2576,
+        16
+      ],
+      "id": "114a6cd8-0f5b-4f20-92bf-2667c8429475",
+      "name": "Convert to File"
     }
   ],
   "connections": {
@@ -461,11 +417,6 @@
         ]
       ]
     },
-    "HTTP Request1": {
-      "main": [
-        []
-      ]
-    },
     "Pick Title & Text": {
       "main": [
         [
@@ -488,27 +439,11 @@
         ]
       ]
     },
-    "Build TXT": {
-      "main": [
-        []
-      ]
-    },
     "Upload file": {
       "main": [
         [
           {
             "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Convert to text file": {
-      "main": [
-        [
-          {
-            "node": "Upload file",
             "type": "main",
             "index": 0
           }
@@ -542,6 +477,28 @@
         [
           {
             "node": "Pick Title & Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
             "type": "main",
             "index": 0
           }
