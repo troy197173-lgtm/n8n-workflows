@@ -166,8 +166,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2096,
-        16
+        1872,
+        0
       ],
       "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
       "name": "Pick Title & Text"
@@ -183,7 +183,7 @@
         "messages": {
           "values": [
             {
-              "content": "=あなたは技術記事の翻訳者兼記事のライターです。以下の記事を日本語に翻訳して、わかりやすくマークダウン形式の記事にしてください。またアルファベットの名前は日本人に屋読みにくいのでローマ字のカタカナ表記にしてください。\n\n「はい、承知いたしました」「翻訳しました」などの挨拶、前置き、解説は一切出力しないでください。\n\n指定されたマークダウン形式の文章のみを直接出力してください。\n\n最初の文字は必ず「# タイトル」から始めてください。\n\n記事は以下です。\n{{ $json.text }}\n\n\n- 固有名詞（会社名/人名/地名）は原文維持\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\nURLリンクは以下です。\n{{ $('Limit').item.json.link }}\n\nURL画像のリンクは\n{{ $('Message a model').item.json.content.parts[0].text }}　のテキストです。\n\n出力形式については下記の内容を一つのマークダウン形式の文章としてください。\n「タイトル、画像、要約、本文、リンクを、途切れることなく一つの連続したテキストブロックとして出力してください。」\n\n"
+              "content": "=あなたは技術記事の翻訳者兼記事のライターです。以下の記事を日本語に翻訳して、わかりやすくマークダウン形式の記事にしてください。またアルファベットの名前は日本人に屋読みにくいのでローマ字のカタカナ表記にしてください。\n\n「はい、承知いたしました」「翻訳しました」などの挨拶、前置き、解説は一切出力しないでください。\n\n指定されたマークダウン形式の文章のみを直接出力してください。\n\n最初の文字は必ず「# タイトル」から始めてください。\n\n記事は以下です。\n{{ $json.text }}\n\n\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\n\n\n出力は以下の構成を厳守してください：\n\n# [タイトル]\n![画像]({{ $('Message a model').item.json.content.parts[0].text }})\n\n> [要約文]\n\n## [見出し1]\n[本文1]\n\n## [見出し2]\n[本文2]\n\n---\n[原文を読む]({{ $('Limit').item.json.link }})\n\n※「」や解説、コードブロック（```）は含めず、この構造のテキストのみを出力してください。"
             }
           ]
         },
@@ -192,8 +192,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        2368,
-        -240
+        2016,
+        16
       ],
       "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
       "name": "Translate with Gemini",
@@ -211,8 +211,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
-        -176
+        2352,
+        16
       ],
       "id": "d1aae867-bc85-49e2-82f7-79c33126ca61",
       "name": "Build TXT"
@@ -367,8 +367,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1648,
-        -48
+        1584,
+        16
       ],
       "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
       "name": "Message a model",
