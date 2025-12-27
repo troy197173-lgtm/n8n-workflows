@@ -1,0 +1,217 @@
+{
+  "id": "NQKBpC06WOOh1nZy",
+  "name": "長尺音声ファイル作成（辞書使用）",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -48
+      ],
+      "id": "66afaeaa-55eb-4be0-b8a1-dc012a26408f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://texttospeech.googleapis.com/v1/text:synthesize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n{\n  \"input\": {\n    \"text\": \"{{ $json['音声'] }}\"\n  },\n  \"voice\": {\n    \"languageCode\": \"ja-JP\",\n    \"name\": \"ja-JP-Neural2-D\"\n  },\n  \"audioConfig\": {\n    \"audioEncoding\": \"MP3\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        768,
+        -48
+      ],
+      "id": "d1563d91-9ac9-4768-9654-d1881f892955",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        },
+        "httpHeaderAuth": {
+          "id": "K1Qcrxjl29WjOvIx",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Googleからの返答（Base64文字列）を取得\nconst base64String = $input.item.json.audioContent;\n\n// Base64をバイナリデータ（ファイル）に変換\nconst binaryData = Buffer.from(base64String, 'base64');\n\n// 次のノード（Google Drive）へ渡す形に整える\nreturn {\n  binary: {\n    data: {\n      data: base64String,\n      mimeType: 'audio/mpeg',\n      fileName: 'voice.mp3' // 仮の名前\n    }\n  },\n  json: $input.item.json // 元のデータも残しておく\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -48
+      ],
+      "id": "cb1f0e80-d927-4fa5-8225-0e0d66ff0a0a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "name": "={{ $items(\"Get row(s) in sheet\")[$itemIndex].json[\"file name\"] }}\n",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
+          "mode": "list",
+          "cachedResultName": "音声ファイル",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1168,
+        -48
+      ],
+      "id": "2812db3d-b73c-459e-bcfe-a7a0fb0b404b",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1KsyCZbvwANGqftUYI-nhfAXnLE6fzF1l8kZUu6EHjLo",
+          "mode": "list",
+          "cachedResultName": "音声化原稿長尺版",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KsyCZbvwANGqftUYI-nhfAXnLE6fzF1l8kZUu6EHjLo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KsyCZbvwANGqftUYI-nhfAXnLE6fzF1l8kZUu6EHjLo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -48
+      ],
+      "id": "c83e6158-8903-4cb7-90ad-bf909fe86c63",
+      "name": "Get row(s) in sheet",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Gmail Trigger": {
+      "Gmail Trigger": {
+        "lastTimeChecked": 1753948068,
+        "possibleDuplicates": [
+          "1985f739a1f054f6",
+          "1985f6cc9626123c"
+        ]
+      }
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-07-25T10:55:05.936Z",
+      "createdAt": "2025-07-25T10:55:05.936Z",
+      "role": "workflow:owner",
+      "workflowId": "NQKBpC06WOOh1nZy",
+      "projectId": "dEuNNMB3JR1LXOMn"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
