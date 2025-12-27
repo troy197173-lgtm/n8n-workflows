@@ -32,13 +32,13 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=\n{\n  \"input\": {\n    \"ssml\": \"<speak>{{ $json['音声原稿'] }}</speak>\" \n  },\n  \"voice\": {\n    \"languageCode\": \"ja-JP\",\n    \"name\": \"ja-JP-Chirp3-HD-A\" \n  },\n  \"audioConfig\": {\n    \"audioEncoding\": \"MP3\"\n  }\n}",
+        "jsonBody": "={\n  \"input\": {\n    \"ssml\": \"{{ $json.ssmlText }}\"\n  },\n  \"voice\": {\n    \"languageCode\": \"ja-JP\",\n    \"name\": \"ja-JP-Neural2-B\"\n  },\n  \"audioConfig\": {\n    \"audioEncoding\": \"MP3\",\n    \"speakingRate\": 1.05, \n    \"pitch\": 0.0\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        768,
+        1008,
         -48
       ],
       "id": "d1563d91-9ac9-4768-9654-d1881f892955",
@@ -62,7 +62,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        960,
+        1200,
         -48
       ],
       "id": "cb1f0e80-d927-4fa5-8225-0e0d66ff0a0a",
@@ -88,7 +88,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1168,
+        1408,
         -48
       ],
       "id": "2812db3d-b73c-459e-bcfe-a7a0fb0b404b",
@@ -135,6 +135,19 @@
           "name": "Google Service Account account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 直前のノードから原稿を取得（自動的に直前のデータを見る設定）\nlet script = $input.item.json[\"音声原稿\"];\n\n// 2. 辞書ノードからデータを取得\n// ※もし辞書ノードの名前が違う場合は、左の「Nodes」パネルからドラッグ＆ドロップしてください\nlet dictionary = [];\ntry {\n  // ここだけ、実際の辞書ノードの名前に合わせてください\n  dictionary = $node[\"Google Sheets (音声アクセント辞書ファイル)\"].json;\n} catch (e) {\n  // 辞書が見つからない場合はスキップ\n}\n\nconst dictionaryArray = Array.isArray(dictionary) ? dictionary : [dictionary];\n\n// 3. 置換処理\ndictionaryArray.forEach(entry => {\n  if (entry.Word && entry.Reading) {\n    const escapedWord = entry.Word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n    const regex = new RegExp(escapedWord, 'g');\n    script = script.replace(regex, entry.Reading);\n  }\n});\n\n// 4. JSONエスケープ処理（長文・改行対策）\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        -48
+      ],
+      "id": "3a54df78-5545-4c02-ada3-57595b79ab1b",
+      "name": "Code in JavaScript1"
     }
   ],
   "connections": {
@@ -172,6 +185,17 @@
       ]
     },
     "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
       "main": [
         [
           {
