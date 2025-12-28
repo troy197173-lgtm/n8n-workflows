@@ -88,8 +88,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1616,
-        -48
+        1552,
+        -208
       ],
       "id": "2812db3d-b73c-459e-bcfe-a7a0fb0b404b",
       "name": "Upload file",
@@ -182,6 +182,79 @@
           "name": "Google Service Account account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/tmp/input.mp3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        -48
+      ],
+      "id": "d5872d5a-e629-4a9c-b233-d59617b86a7c",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "command": "ffmpeg -y -i /tmp/input.mp3 -af silencedetect=d=0.8:n=-30dB -f segment -segment_times_threshold 0.1 -segment_format mp3 \"/tmp/out_%03d.mp3\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        -48
+      ],
+      "id": "12b949e6-22f7-410f-979e-97fbac11c24a",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/tmp/out_*.mp3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        -48
+      ],
+      "id": "178ff846-bfb5-47c9-8a52-8177aac304d7",
+      "name": "Read Binary Files"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Get row(s) in sheet').first().json.Filename }}_{{ $itemIndex }}.mp3",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2224,
+        -48
+      ],
+      "id": "8db67d4d-481b-4359-a4de-56a1fac518dd",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
     }
   ],
   "connections": {
@@ -211,7 +284,7 @@
       "main": [
         [
           {
-            "node": "Upload file",
+            "node": "Read/Write Files from Disk",
             "type": "main",
             "index": 0
           }
@@ -245,6 +318,39 @@
         [
           {
             "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Read Binary Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Binary Files": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
             "type": "main",
             "index": 0
           }
