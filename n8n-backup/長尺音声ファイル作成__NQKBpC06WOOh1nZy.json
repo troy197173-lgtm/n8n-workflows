@@ -38,7 +38,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1008,
+        1216,
         -48
       ],
       "id": "d1563d91-9ac9-4768-9654-d1881f892955",
@@ -62,7 +62,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1200,
+        1408,
         -48
       ],
       "id": "cb1f0e80-d927-4fa5-8225-0e0d66ff0a0a",
@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $items(\"Get row(s) in sheet\")[$itemIndex].json[\"file name\"] }}\n",
+        "name": "={{ $('Get row(s) in sheet').item.json.Filename }}",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -88,7 +88,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1408,
+        1616,
         -48
       ],
       "id": "2812db3d-b73c-459e-bcfe-a7a0fb0b404b",
@@ -138,16 +138,50 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. 直前のノードから原稿を取得（自動的に直前のデータを見る設定）\nlet script = $input.item.json[\"音声原稿\"];\n\n// 2. 辞書ノードからデータを取得\n// ※もし辞書ノードの名前が違う場合は、左の「Nodes」パネルからドラッグ＆ドロップしてください\nlet dictionary = [];\ntry {\n  // ここだけ、実際の辞書ノードの名前に合わせてください\n  dictionary = $node[\"Google Sheets (音声アクセント辞書ファイル)\"].json;\n} catch (e) {\n  // 辞書が見つからない場合はスキップ\n}\n\nconst dictionaryArray = Array.isArray(dictionary) ? dictionary : [dictionary];\n\n// 3. 置換処理\ndictionaryArray.forEach(entry => {\n  if (entry.Word && entry.Reading) {\n    const escapedWord = entry.Word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n    const regex = new RegExp(escapedWord, 'g');\n    script = script.replace(regex, entry.Reading);\n  }\n});\n\n// 4. JSONエスケープ処理（長文・改行対策）\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
+        "jsCode": "// 1. 各ノード名の設定（左側のINPUTに表示されている名前に合わせました）\nconst GENKO_NODE_NAME = \"Get row(s) in sheet\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 原稿の取得\nlet script = \"\";\ntry {\n  // 直前ではなく、ノード名を指定して確実に取得\n  script = $node[GENKO_NODE_NAME].json[\"音声原稿\"] || \"\";\n} catch (e) {\n  return { error: `ノード '${GENKO_NODE_NAME}' から '音声原稿' を取得できません。` };\n}\n\n// 3. 辞書の取得\nlet dictionary = [];\ntry {\n  dictionary = $node[JISHO_NODE_NAME].json;\n} catch (e) {\n  // 辞書がなくてもエラーにせず進む\n}\n\nconst dictionaryArray = Array.isArray(dictionary) ? dictionary : [dictionary];\n\n// 4. 置換処理の実行\nif (script !== \"\") {\n  dictionaryArray.forEach(entry => {\n    if (entry && typeof entry.Word === 'string' && entry.Reading) {\n      const escapedWord = entry.Word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n      const regex = new RegExp(escapedWord, 'g');\n      script = script.replace(regex, entry.Reading);\n    }\n  });\n}\n\n// 5. JSONエスケープ処理\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        784,
+        992,
         -48
       ],
       "id": "3a54df78-5545-4c02-ada3-57595b79ab1b",
       "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1TU2PUR1SLr9B6-NDqCng_X0J8Jx4oLnbfZTRK8pEqP0",
+          "mode": "list",
+          "cachedResultName": "音声アクセント辞書ファイル",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TU2PUR1SLr9B6-NDqCng_X0J8Jx4oLnbfZTRK8pEqP0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TU2PUR1SLr9B6-NDqCng_X0J8Jx4oLnbfZTRK8pEqP0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        784,
+        -48
+      ],
+      "id": "55a5e05f-4cba-4f94-b0a8-7b72d29d2763",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleApi": {
+          "id": "rKIeWR82vBV5zQbG",
+          "name": "Google Service Account account 2"
+        }
+      }
     }
   ],
   "connections": {
@@ -188,7 +222,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript1",
+            "node": "Get row(s) in sheet1",
             "type": "main",
             "index": 0
           }
@@ -200,6 +234,17 @@
         [
           {
             "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
             "type": "main",
             "index": 0
           }
