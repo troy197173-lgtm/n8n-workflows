@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $('Get row(s) in sheet').item.json.Filename }}",
+        "name": "={{ $('Get row(s) in sheet').first().json.Filename }}_{{ $now.format('yyyyMMdd_HHmm') }}",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -138,7 +138,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. 各ノード名の設定（左側のINPUTに表示されている名前に合わせました）\nconst GENKO_NODE_NAME = \"Get row(s) in sheet\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 原稿の取得\nlet script = \"\";\ntry {\n  // 直前ではなく、ノード名を指定して確実に取得\n  script = $node[GENKO_NODE_NAME].json[\"音声原稿\"] || \"\";\n} catch (e) {\n  return { error: `ノード '${GENKO_NODE_NAME}' から '音声原稿' を取得できません。` };\n}\n\n// 3. 辞書の取得\nlet dictionary = [];\ntry {\n  dictionary = $node[JISHO_NODE_NAME].json;\n} catch (e) {\n  // 辞書がなくてもエラーにせず進む\n}\n\nconst dictionaryArray = Array.isArray(dictionary) ? dictionary : [dictionary];\n\n// 4. 置換処理の実行\nif (script !== \"\") {\n  dictionaryArray.forEach(entry => {\n    if (entry && typeof entry.Word === 'string' && entry.Reading) {\n      const escapedWord = entry.Word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n      const regex = new RegExp(escapedWord, 'g');\n      script = script.replace(regex, entry.Reading);\n    }\n  });\n}\n\n// 5. JSONエスケープ処理\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
+        "jsCode": "// 1. 各ノード名の設定\nconst GENKO_NODE_NAME = \"Get row(s) in sheet\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 原稿の取得\nlet script = \"\";\ntry {\n  script = $node[GENKO_NODE_NAME].json[\"音声原稿\"] || \"\";\n} catch (e) {\n  return { error: `ノード '${GENKO_NODE_NAME}' からデータが見つかりません。` };\n}\n\n// 3. 辞書の全取得（.all() を使うことで全行取得を確実にします）\nlet dictionaryItems = [];\ntry {\n  dictionaryItems = $(JISHO_NODE_NAME).all();\n} catch (e) {\n  return { error: `辞書ノード '${JISHO_NODE_NAME}' の取得に失敗しました。` };\n}\n\n// 4. 置換処理の実行\nif (script !== \"\") {\n  // 辞書の各アイテムに対してループ\n  for (const item of dictionaryItems) {\n    const word = item.json.Word;\n    const reading = item.json.Reading;\n\n    if (word && reading && typeof word === 'string') {\n      // 特殊文字をエスケープして正規表現を作成\n      const escapedWord = word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n      const regex = new RegExp(escapedWord, 'g');\n      script = script.replace(regex, reading);\n    }\n  }\n\n  // 文章の区切り（。）に1秒の無音を挿入\n  script = script.replace(/。/g, '。<break time=\"1000ms\"/>');\n}\n\n// 5. JSONエスケープ処理\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
