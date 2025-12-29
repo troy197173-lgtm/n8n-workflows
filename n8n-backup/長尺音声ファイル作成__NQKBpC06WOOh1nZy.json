@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $json.Filename }}_{{ $now.format('yyyyMMdd_HHmm') }}_{{ $json.index.toString().padStart(2, '0') }}.mp3",
+        "name": "={{ $node[\"Code in JavaScript3\"].json.Filename }}_{{ $now.setZone('Asia/Tokyo').format('yyyyMMdd_HHmm') }}_{{ ($node[\"Code in JavaScript3\"].json.index + 1).toString().padStart(2, '0') }}.mp3",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -138,16 +138,29 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. 各ノード名の設定\nconst GENKO_NODE_NAME = \"Get row(s) in sheet\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 原稿の取得\nlet script = \"\";\ntry {\n  script = $node[GENKO_NODE_NAME].json[\"音声原稿\"] || \"\";\n} catch (e) {\n  return { error: `ノード '${GENKO_NODE_NAME}' からデータが見つかりません。` };\n}\n\n// 3. 辞書の全取得（.all() を使うことで全行取得を確実にします）\nlet dictionaryItems = [];\ntry {\n  dictionaryItems = $(JISHO_NODE_NAME).all();\n} catch (e) {\n  return { error: `辞書ノード '${JISHO_NODE_NAME}' の取得に失敗しました。` };\n}\n\n// 4. 置換処理の実行\nif (script !== \"\") {\n  // 辞書の各アイテムに対してループ\n  for (const item of dictionaryItems) {\n    const word = item.json.Word;\n    const reading = item.json.Reading;\n\n    if (word && reading && typeof word === 'string') {\n      // 特殊文字をエスケープして正規表現を作成\n      const escapedWord = word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n      const regex = new RegExp(escapedWord, 'g');\n      script = script.replace(regex, reading);\n    }\n  }\n\n  // 文章の区切り（。）に1秒の無音を挿入\n  script = script.replace(/。/g, '。<break time=\"1000ms\"/>');\n}\n\n// 5. JSONエスケープ処理\nconst escapedScript = script\n  .replace(/\\\\/g, \"\\\\\\\\\")\n  .replace(/\"/g, '\\\\\"')\n  .replace(/\\n/g, \"\\\\n\")\n  .replace(/\\r/g, \"\\\\r\")\n  .replace(/\\t/g, \"\\\\t\");\n\nreturn {\n  ssmlText: `<speak>${escapedScript}</speak>`\n};"
+        "jsCode": "const GENKO_NODE = \"Get row(s) in sheet\";\nconst data = $node[GENKO_NODE].json;\n\nconst fullText = data[\"音声原稿\"] || \"\";\nconst filename = data[\"Filename\"] || \"voice\";\n\n// 「。」で分割して6つのアイテムを作成\nconst sentences = fullText.split(/(?<=。)/).filter(s => s.trim() !== \"\");\n\nreturn sentences.map((sentence, index) => {\n  return {\n    json: {\n      \"音声原稿\": sentence.trim(),\n      \"Filename\": filename,\n      \"index\": index\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
-        128
+        896,
+        -48
       ],
-      "id": "3a54df78-5545-4c02-ada3-57595b79ab1b",
-      "name": "Code in JavaScript1"
+      "id": "610569b6-68df-4e8b-949e-255344751d3e",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 辞書ノードの名前\nconst JISHO_NODE = \"Get row(s) in sheet1\";\n\n// 2. 「今届いたアイテムすべて」をループで処理する\n// これにより、入力された6つのアイテムそれぞれに対して処理を行い、6つ出力します\nreturn $input.all().map((item) => {\n  let script = item.json[\"音声原稿\"] || \"\";\n  let filename = item.json[\"Filename\"] || \"voice\";\n  let index = item.json[\"index\"] || 0;\n\n  // 辞書データを取得して置換\n  let dictionaryItems = [];\n  try {\n    dictionaryItems = $(JISHO_NODE).all();\n  } catch (e) {}\n\n  if (script !== \"\" && dictionaryItems.length > 0) {\n    for (const d of dictionaryItems) {\n      const word = d.json.Word;\n      const reading = d.json.Reading;\n      if (word && reading) {\n        const regex = new RegExp(word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'g');\n        script = script.replace(regex, reading);\n      }\n    }\n  }\n\n  // SSML作成\n  const ssmlText = `<speak><prosody rate=\"1.0\" pitch=\"0st\" volume=\"0dB\">${script}</prosody></speak>`;\n\n  // 処理したアイテムを返す\n  return {\n    json: {\n      \"音声原稿\": script,\n      \"Filename\": filename,\n      \"index\": index,\n      \"ssmlText\": ssmlText\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -48
+      ],
+      "id": "0cf8b3cb-e42c-4828-bc88-45b8fe06ef75",
+      "name": "Code in JavaScript3"
     },
     {
       "parameters": {
@@ -171,7 +184,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        896,
+        720,
         -48
       ],
       "id": "55a5e05f-4cba-4f94-b0a8-7b72d29d2763",
@@ -183,32 +196,6 @@
           "name": "Google Service Account account 2"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. スプレッドシートから届いたデータを取得\nconst fullText = $input.item.json[\"音声原稿\"] || \"\";\nconst filename = $input.item.json[\"Filename\"] || \"voice\";\n\n// 2. 「。」で分割し、空の要素を除去する\n// 句点を残すために split(/(?<=。)/) を使うのがコツです\nconst sentences = fullText.split(/(?<=。)/).filter(s => s.trim() !== \"\");\n\n// 3. 分割された文章ごとに新しいアイテムを作成\nreturn sentences.map((sentence, index) => {\n  return {\n    json: {\n      // 分割された1文\n      \"音声原稿\": sentence.trim(),\n      // 元のファイル名を保持\n      \"Filename\": filename,\n      // 何番目の文章か（後の保存用）\n      \"index\": index\n    }\n  };\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        720,
-        -48
-      ],
-      "id": "610569b6-68df-4e8b-949e-255344751d3e",
-      "name": "Code in JavaScript2"
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. 各ノード名を画像に合わせて指定\nconst BUNKATSU_NODE_NAME = \"Code in JavaScript2\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 「2つ前のノード」から分割された原稿の情報を直接取得\n// 直前の「辞書」ノードに汚染されていない純粋な分割データを取得します\nlet sourceNode;\ntry {\n  sourceNode = $node[BUNKATSU_NODE_NAME];\n} catch (e) {\n  throw new Error(`ノード名「${BUNKATSU_NODE_NAME}」が見つかりません。`);\n}\n\nlet script = sourceNode.json[\"音声原稿\"] || \"\";\nlet filename = sourceNode.json[\"Filename\"] || \"voice\";\nlet index = sourceNode.json[\"index\"] || 0;\n\n// 3. 辞書ノードの「すべての行」を取得\nlet dictionaryItems = [];\ntry {\n  dictionaryItems = $(JISHO_NODE_NAME).all();\n} catch (e) {\n  // 辞書が取得できない場合は置換せずに進む\n}\n\n// 4. 置換処理（scriptをベースに辞書を適用）\nif (script !== \"\" && dictionaryItems.length > 0) {\n  for (const item of dictionaryItems) {\n    const word = item.json.Word;\n    const reading = item.json.Reading;\n    \n    if (word && reading) {\n      // 特殊文字をエスケープして正規表現を作成\n      const regex = new RegExp(word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'g');\n      script = script.replace(regex, reading);\n    }\n  }\n}\n\n// 5. JSONエスケープ処理（改行や引用符によるJSONエラーを防止）\nconst escapedScript = script.replace(/\\\\/g, \"\\\\\\\\\").replace(/\"/g, '\\\\\"').replace(/\\n/g, \"\\\\n\");\n\n// 6. 出力（HTTP Requestが必要とする形式にまとめ直す）\n// エスケープ処理を一旦リセットし、純粋なタグとして組み立てる\nconst finalSSML = `<speak><prosody rate=\"1.0\" pitch=\"0st\" volume=\"0dB\">${script}</prosody></speak>`;\n\nreturn {\n  json: {\n    \"音声原稿\": script,\n    \"Filename\": filename,\n    \"index\": index,\n    \"ssmlText\": finalSSML // ここではバックスラッシュを入れない\n  }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1072,
-        -48
-      ],
-      "id": "0cf8b3cb-e42c-4828-bc88-45b8fe06ef75",
-      "name": "Code in JavaScript3"
     }
   ],
   "connections": {
@@ -249,23 +236,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript1": {
-      "main": [
-        []
-      ]
-    },
-    "Get row(s) in sheet1": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript3",
+            "node": "Get row(s) in sheet1",
             "type": "main",
             "index": 0
           }
@@ -276,7 +247,7 @@
       "main": [
         [
           {
-            "node": "Get row(s) in sheet1",
+            "node": "Code in JavaScript3",
             "type": "main",
             "index": 0
           }
@@ -288,6 +259,17 @@
         [
           {
             "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
             "type": "main",
             "index": 0
           }
