@@ -192,8 +192,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        1616,
-        -48
+        1888,
+        -368
       ],
       "id": "d5872d5a-e629-4a9c-b233-d59617b86a7c",
       "name": "Read/Write Files from Disk"
@@ -205,8 +205,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1808,
-        -48
+        2048,
+        -368
       ],
       "id": "12b949e6-22f7-410f-979e-97fbac11c24a",
       "name": "Execute Command"
@@ -219,8 +219,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        2016,
-        -48
+        2224,
+        -352
       ],
       "id": "178ff846-bfb5-47c9-8a52-8177aac304d7",
       "name": "Read Binary Files"
@@ -244,8 +244,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2224,
-        -48
+        2192,
+        -160
       ],
       "id": "8db67d4d-481b-4359-a4de-56a1fac518dd",
       "name": "Upload file1",
@@ -255,6 +255,34 @@
           "name": "Google Drive account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "command": "cat > /tmp/input_from_n8n.mp3\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        -336
+      ],
+      "id": "16ce2e09-e5b9-4ea1-be68-dd6381b3ffd3",
+      "name": "Detect Silence"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/.n8n/input.mp3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        -48
+      ],
+      "id": "8f60b496-df34-470f-af54-129764c92c51",
+      "name": "Read/Write Files from Disk1"
     }
   ],
   "connections": {
@@ -284,7 +312,7 @@
       "main": [
         [
           {
-            "node": "Read/Write Files from Disk",
+            "node": "Read/Write Files from Disk1",
             "type": "main",
             "index": 0
           }
