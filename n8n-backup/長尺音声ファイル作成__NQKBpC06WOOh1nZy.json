@@ -32,13 +32,13 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"input\": {\n    \"ssml\": \"{{ $json.ssmlText }}\"\n  },\n  \"voice\": {\n    \"languageCode\": \"ja-JP\",\n    \"name\": \"ja-JP-Neural2-B\"\n  },\n  \"audioConfig\": {\n    \"audioEncoding\": \"MP3\",\n    \"speakingRate\": 1.05, \n    \"pitch\": 0.0\n  }\n}",
+        "jsonBody": "={\n  \"input\": {\n    \"ssml\": {{ JSON.stringify($json.ssmlText) }}\n  },\n  \"voice\": {\n    \"languageCode\": \"ja-JP\",\n    \"name\": \"ja-JP-Neural2-B\"\n  },\n  \"audioConfig\": {\n    \"audioEncoding\": \"MP3\",\n    \"speakingRate\": 1.0,\n    \"pitch\": 0.0\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1216,
+        1296,
         -48
       ],
       "id": "d1563d91-9ac9-4768-9654-d1881f892955",
@@ -62,7 +62,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1408,
+        1472,
         -48
       ],
       "id": "cb1f0e80-d927-4fa5-8225-0e0d66ff0a0a",
@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $('Get row(s) in sheet').first().json.Filename }}_{{ $now.format('yyyyMMdd_HHmm') }}",
+        "name": "={{ $json.Filename }}_{{ $now.format('yyyyMMdd_HHmm') }}_{{ $json.index.toString().padStart(2, '0') }}.mp3",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -88,8 +88,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1552,
-        -208
+        1648,
+        -48
       ],
       "id": "2812db3d-b73c-459e-bcfe-a7a0fb0b404b",
       "name": "Upload file",
@@ -122,7 +122,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        576,
+        544,
         -48
       ],
       "id": "c83e6158-8903-4cb7-90ad-bf909fe86c63",
@@ -143,8 +143,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        992,
-        -48
+        1760,
+        128
       ],
       "id": "3a54df78-5545-4c02-ada3-57595b79ab1b",
       "name": "Code in JavaScript1"
@@ -171,11 +171,12 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        784,
+        896,
         -48
       ],
       "id": "55a5e05f-4cba-4f94-b0a8-7b72d29d2763",
       "name": "Get row(s) in sheet1",
+      "executeOnce": true,
       "credentials": {
         "googleApi": {
           "id": "rKIeWR82vBV5zQbG",
@@ -185,104 +186,29 @@
     },
     {
       "parameters": {
-        "operation": "write",
-        "fileName": "/tmp/input.mp3",
-        "options": {}
+        "jsCode": "// 1. スプレッドシートから届いたデータを取得\nconst fullText = $input.item.json[\"音声原稿\"] || \"\";\nconst filename = $input.item.json[\"Filename\"] || \"voice\";\n\n// 2. 「。」で分割し、空の要素を除去する\n// 句点を残すために split(/(?<=。)/) を使うのがコツです\nconst sentences = fullText.split(/(?<=。)/).filter(s => s.trim() !== \"\");\n\n// 3. 分割された文章ごとに新しいアイテムを作成\nreturn sentences.map((sentence, index) => {\n  return {\n    json: {\n      // 分割された1文\n      \"音声原稿\": sentence.trim(),\n      // 元のファイル名を保持\n      \"Filename\": filename,\n      // 何番目の文章か（後の保存用）\n      \"index\": index\n    }\n  };\n});"
       },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        1888,
-        -368
-      ],
-      "id": "d5872d5a-e629-4a9c-b233-d59617b86a7c",
-      "name": "Read/Write Files from Disk"
-    },
-    {
-      "parameters": {
-        "command": "ffmpeg -y -i /tmp/input.mp3 -af silencedetect=d=0.8:n=-30dB -f segment -segment_times_threshold 0.1 -segment_format mp3 \"/tmp/out_%03d.mp3\""
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        2048,
-        -368
-      ],
-      "id": "12b949e6-22f7-410f-979e-97fbac11c24a",
-      "name": "Execute Command"
-    },
-    {
-      "parameters": {
-        "fileSelector": "/tmp/out_*.mp3",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
-      "position": [
-        2224,
-        -352
-      ],
-      "id": "178ff846-bfb5-47c9-8a52-8177aac304d7",
-      "name": "Read Binary Files"
-    },
-    {
-      "parameters": {
-        "name": "={{ $('Get row(s) in sheet').first().json.Filename }}_{{ $itemIndex }}.mp3",
-        "driveId": {
-          "__rl": true,
-          "mode": "list",
-          "value": "My Drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "mode": "list",
-          "value": "root",
-          "cachedResultName": "/ (Root folder)"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        2192,
-        -160
-      ],
-      "id": "8db67d4d-481b-4359-a4de-56a1fac518dd",
-      "name": "Upload file1",
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "KwuypKfMiPyMmLWH",
-          "name": "Google Drive account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "command": "cat > /tmp/input_from_n8n.mp3\n"
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1328,
-        -336
-      ],
-      "id": "16ce2e09-e5b9-4ea1-be68-dd6381b3ffd3",
-      "name": "Detect Silence"
-    },
-    {
-      "parameters": {
-        "operation": "write",
-        "fileName": "/home/node/.n8n/input.mp3",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
-      "position": [
-        1616,
+        720,
         -48
       ],
-      "id": "8f60b496-df34-470f-af54-129764c92c51",
-      "name": "Read/Write Files from Disk1"
+      "id": "610569b6-68df-4e8b-949e-255344751d3e",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 各ノード名を画像に合わせて指定\nconst BUNKATSU_NODE_NAME = \"Code in JavaScript2\"; \nconst JISHO_NODE_NAME = \"Get row(s) in sheet1\"; \n\n// 2. 「2つ前のノード」から分割された原稿の情報を直接取得\n// 直前の「辞書」ノードに汚染されていない純粋な分割データを取得します\nlet sourceNode;\ntry {\n  sourceNode = $node[BUNKATSU_NODE_NAME];\n} catch (e) {\n  throw new Error(`ノード名「${BUNKATSU_NODE_NAME}」が見つかりません。`);\n}\n\nlet script = sourceNode.json[\"音声原稿\"] || \"\";\nlet filename = sourceNode.json[\"Filename\"] || \"voice\";\nlet index = sourceNode.json[\"index\"] || 0;\n\n// 3. 辞書ノードの「すべての行」を取得\nlet dictionaryItems = [];\ntry {\n  dictionaryItems = $(JISHO_NODE_NAME).all();\n} catch (e) {\n  // 辞書が取得できない場合は置換せずに進む\n}\n\n// 4. 置換処理（scriptをベースに辞書を適用）\nif (script !== \"\" && dictionaryItems.length > 0) {\n  for (const item of dictionaryItems) {\n    const word = item.json.Word;\n    const reading = item.json.Reading;\n    \n    if (word && reading) {\n      // 特殊文字をエスケープして正規表現を作成\n      const regex = new RegExp(word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'g');\n      script = script.replace(regex, reading);\n    }\n  }\n}\n\n// 5. JSONエスケープ処理（改行や引用符によるJSONエラーを防止）\nconst escapedScript = script.replace(/\\\\/g, \"\\\\\\\\\").replace(/\"/g, '\\\\\"').replace(/\\n/g, \"\\\\n\");\n\n// 6. 出力（HTTP Requestが必要とする形式にまとめ直す）\n// エスケープ処理を一旦リセットし、純粋なタグとして組み立てる\nconst finalSSML = `<speak><prosody rate=\"1.0\" pitch=\"0st\" volume=\"0dB\">${script}</prosody></speak>`;\n\nreturn {\n  json: {\n    \"音声原稿\": script,\n    \"Filename\": filename,\n    \"index\": index,\n    \"ssmlText\": finalSSML // ここではバックスラッシュを入れない\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -48
+      ],
+      "id": "0cf8b3cb-e42c-4828-bc88-45b8fe06ef75",
+      "name": "Code in JavaScript3"
     }
   ],
   "connections": {
@@ -312,7 +238,7 @@
       "main": [
         [
           {
-            "node": "Read/Write Files from Disk1",
+            "node": "Upload file",
             "type": "main",
             "index": 0
           }
@@ -323,7 +249,7 @@
       "main": [
         [
           {
-            "node": "Get row(s) in sheet1",
+            "node": "Code in JavaScript2",
             "type": "main",
             "index": 0
           }
@@ -332,53 +258,36 @@
     },
     "Code in JavaScript1": {
       "main": [
-        [
-          {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Get row(s) in sheet1": {
       "main": [
         [
           {
-            "node": "Code in JavaScript1",
+            "node": "Code in JavaScript3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read/Write Files from Disk": {
+    "Code in JavaScript2": {
       "main": [
         [
           {
-            "node": "Execute Command",
+            "node": "Get row(s) in sheet1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Execute Command": {
+    "Code in JavaScript3": {
       "main": [
         [
           {
-            "node": "Read Binary Files",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Binary Files": {
-      "main": [
-        [
-          {
-            "node": "Upload file1",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
