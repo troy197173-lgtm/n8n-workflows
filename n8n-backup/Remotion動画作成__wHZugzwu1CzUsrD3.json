@@ -234,6 +234,81 @@
       ],
       "id": "f196e0fb-9792-4732-9578-14717dd1f40b",
       "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        -160
+      ],
+      "id": "ae43e72a-c515-48d0-95af-996c5282f8b2",
+      "name": "Share file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        64
+      ],
+      "id": "e6d4f334-9e19-481a-a879-32048068d45a",
+      "name": "Share file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=cd /root/video-factory && ./node_modules/.bin/remotion render src/index.js Main out_{{ $node[\"Upload file1\"].json.id }}.mp4 --props='{\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file\"].json.id }}\", \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file1\"].json.id }}\"}'"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        -156.0275862068966
+      ],
+      "id": "524cbf85-8acf-411b-b487-c4777abe9791",
+      "name": "Execute Command"
     }
   ],
   "connections": {
@@ -274,7 +349,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request1",
+            "node": "Share file1",
             "type": "main",
             "index": 0
           }
@@ -318,7 +393,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "Share file",
             "type": "main",
             "index": 0
           }
@@ -331,6 +406,28 @@
         [
           {
             "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
             "type": "main",
             "index": 0
           }
