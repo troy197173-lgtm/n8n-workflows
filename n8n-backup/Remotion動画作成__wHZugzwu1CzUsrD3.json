@@ -299,16 +299,44 @@
     },
     {
       "parameters": {
-        "command": "=cd /root/video-factory && ./node_modules/.bin/remotion render src/index.js Main out_{{ $node[\"Upload file1\"].json.id }}.mp4 --props='{\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file\"].json.id }}\", \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file1\"].json.id }}\"}'"
+        "command": "=nsenter -t 1 -m -u -n -i -- /home/video-factory/node_modules/.bin/remotion render /home/video-factory/src/index.js Main /home/video-factory/out_{{ $node[\"Upload file1\"].json.id }}.mp4 --props='{\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file\"].json.id }}\", \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file1\"].json.id }}\"}'"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1504,
-        -156.0275862068966
+        1488,
+        -384
       ],
       "id": "524cbf85-8acf-411b-b487-c4777abe9791",
       "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://151.106.113.224:8080",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "imageUrl",
+              "value": "=https://drive.google.com/uc?export=download&id={{ $('Upload file').item.json.id }}"
+            },
+            {
+              "name": "audioUrl",
+              "value": "=https://drive.google.com/uc?export=download&id={{ $('Upload file1').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1504,
+        -160
+      ],
+      "id": "dff6630e-ac13-4b0e-b593-e24802318534",
+      "name": "HTTP Request2"
     }
   ],
   "connections": {
@@ -427,7 +455,7 @@
       "main": [
         [
           {
-            "node": "Execute Command",
+            "node": "HTTP Request2",
             "type": "main",
             "index": 0
           }
