@@ -316,7 +316,7 @@
         "url": "http://151.106.113.224:8080/render",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file'].json.id }}\",\n\"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file1'].json.id }}\",\n",
+        "jsonBody": "={\n  \"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file'].json.id }}\",\n  \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file1'].json.id }}\",\n  \"durationInFrames\": 1200\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -330,63 +330,23 @@
     },
     {
       "parameters": {
-        "amount": 120
+        "url": "={{$json[\"output\"]}}\n\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
       },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
       "position": [
         1712,
         -160
       ],
-      "id": "8d59264f-acbc-47c9-b521-06a5a1bc0b65",
-      "name": "Wait",
-      "webhookId": "f62fa5fa-4fb9-4be9-a349-92422a638b68"
-    },
-    {
-      "parameters": {
-        "fileSelector": "/home/node/.n8n-files/test-video.mp4",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
-      "position": [
-        1920,
-        -160
-      ],
-      "id": "266633d0-0d09-4604-91fb-90125ea16e0a",
-      "name": "Read/Write Files from Disk"
-    },
-    {
-      "parameters": {
-        "name": "={{ $('Get row(s) in sheet').item.json['picture name'] }}.mp4",
-        "driveId": {
-          "__rl": true,
-          "mode": "list",
-          "value": "My Drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
-          "mode": "list",
-          "cachedResultName": "音声ファイル",
-          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        2128,
-        -160
-      ],
-      "id": "53b5f832-75db-4714-972e-7652c10897bd",
-      "name": "Upload file2",
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "KwuypKfMiPyMmLWH",
-          "name": "Google Drive account 2"
-        }
-      }
+      "id": "fbab9116-bfb4-49e9-a1cd-190173da7e04",
+      "name": "Get Video"
     }
   ],
   "connections": {
@@ -516,29 +476,7 @@
       "main": [
         [
           {
-            "node": "Wait",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait": {
-      "main": [
-        [
-          {
-            "node": "Read/Write Files from Disk",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read/Write Files from Disk": {
-      "main": [
-        [
-          {
-            "node": "Upload file2",
+            "node": "Get Video",
             "type": "main",
             "index": 0
           }
