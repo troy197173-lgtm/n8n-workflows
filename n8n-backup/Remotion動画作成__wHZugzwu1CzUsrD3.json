@@ -313,24 +313,10 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://151.106.113.224:8080",
+        "url": "http://151.106.113.224:8080/render",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "imageUrl",
-              "value": "=https://drive.google.com/uc?export=download&id={{ $('Upload file').item.json.id }}"
-            },
-            {
-              "name": "audioUrl",
-              "value": "=https://drive.google.com/uc?export=download&id={{ $('Upload file1').item.json.id }}"
-            },
-            {
-              "name": "durationInFrames",
-              "value": "1200"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "=\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file'].json.id }}\",\n\"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file1'].json.id }}\",\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
