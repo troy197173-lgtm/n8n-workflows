@@ -347,6 +347,38 @@
       ],
       "id": "fbab9116-bfb4-49e9-a1cd-190173da7e04",
       "name": "Get Video"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Get row(s) in sheet').item.json['file name'] }}＋{{ $('Get row(s) in sheet').item.json['picture name'] }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ",
+          "mode": "list",
+          "cachedResultName": "音声ファイル",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1rH4xVkTorkFPVxAUHHTzYYPEWIv17laZ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1920,
+        -160
+      ],
+      "id": "55130bf1-0d46-464a-9664-f00aebfb9709",
+      "name": "Upload Video to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KwuypKfMiPyMmLWH",
+          "name": "Google Drive account 2"
+        }
+      }
     }
   ],
   "connections": {
@@ -477,6 +509,17 @@
         [
           {
             "node": "Get Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video": {
+      "main": [
+        [
+          {
+            "node": "Upload Video to Drive",
             "type": "main",
             "index": 0
           }
