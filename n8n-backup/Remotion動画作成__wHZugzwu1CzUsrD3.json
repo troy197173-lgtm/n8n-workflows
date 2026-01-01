@@ -143,7 +143,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"gemini-2.5-flash-preview-tts\",\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $('Get row(s) in sheet').item.json['音声'] }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"AUDIO\"],\n    \"speechConfig\": {\n      \"voiceConfig\": {\n        \"prebuiltVoiceConfig\": {\n          \"voiceName\": \"Zephyr\"\n        }\n      }\n    }\n  }\n}\n",
+        "jsonBody": "={\n  \"model\": \"gemini-2.5-flash-preview-tts\",\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"={{ $('Get row(s) in sheet').item.json['音声'] }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"AUDIO\"],\n    \"speechConfig\": {\n      \"voiceConfig\": {\n        \"prebuiltVoiceConfig\": {\n          \"voiceName\": \"Zephyr\"\n        }\n      }\n    }\n  }\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -280,7 +280,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ slides: $json[\"slides\"] }) }}\n",
-        "options": {}
+        "options": {
+          "timeout": 600000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
