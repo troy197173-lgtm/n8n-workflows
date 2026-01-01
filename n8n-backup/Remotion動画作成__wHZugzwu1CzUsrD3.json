@@ -5,17 +5,6 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        176,
-        48
-      ],
-      "id": "c1eff509-3a56-4b40-96ff-4f2dac30362c",
-      "name": "When clicking ‘Execute workflow’"
-    },
-    {
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
@@ -77,7 +66,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        336,
+        352,
         48
       ],
       "id": "c5720e5b-8c36-451b-b5bb-da77a68564c4",
@@ -224,19 +213,6 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        496,
-        48
-      ],
-      "id": "f196e0fb-9792-4732-9578-14717dd1f40b",
-      "name": "Loop Over Items"
-    },
-    {
-      "parameters": {
         "operation": "share",
         "fileId": {
           "__rl": true,
@@ -285,7 +261,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1296,
+        1504,
         64
       ],
       "id": "e6d4f334-9e19-481a-a879-32048068d45a",
@@ -303,7 +279,7 @@
         "url": "http://151.106.113.224:8080/render-slides",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=\"url\": \"http://151.106.113.224:8080/render\",\n\"jsonBody\": \"={ ... }\"\n",
+        "jsonBody": "={{ \n  {\n    slides: $items(\"Build Slides\").map(item => item.json)\n  } \n}}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -379,20 +355,166 @@
       ],
       "id": "5d8ec75b-e642-4316-b5d1-40a5de96b2ea",
       "name": "Build Slides"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8",
+          "mode": "list",
+          "cachedResultName": "音声用ファイル",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "シート1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O8K-ILuoa2rtes9C3RQQyNW1DC5bHGeaJ9kCfi0aXv8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "番号": "{{$node[\"Loop Over Items\"].item.json[\"番号\"]}}",
+            "picture_id": "={{$node[\"Upload file\"].json[\"id\"]}}",
+            "voice_id": "={{$node[\"Upload file1\"].json[\"id\"]}}"
+          },
+          "matchingColumns": [
+            "番号"
+          ],
+          "schema": [
+            {
+              "id": "番号",
+              "displayName": "番号",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "音声",
+              "displayName": "音声",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "file name",
+              "displayName": "file name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "picture name",
+              "displayName": "picture name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "picture_id",
+              "displayName": "picture_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "voice_id",
+              "displayName": "voice_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1520,
+        -160
+      ],
+      "id": "ba3b7527-c4c0-4599-adc3-fd950a2f0472",
+      "name": "Write IDs to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyaEHmlz1UlOMhPz",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1728,
+        -160
+      ],
+      "id": "e8dc9cd0-f0aa-48da-aa88-7faf9e0f5ebd",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lyaEHmlz1UlOMhPz",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        64
+      ],
+      "id": "b74655a5-3d8d-4a68-b06a-c368bdfd5312",
+      "name": "When clicking ‘Execute workflow’"
     }
   ],
   "connections": {
-    "When clicking ‘Execute workflow’": {
-      "main": [
-        [
-          {
-            "node": "Get row(s) in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "HTTP Request": {
       "main": [
         [
@@ -408,7 +530,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
@@ -470,24 +592,6 @@
         ]
       ]
     },
-    "Loop Over Items": {
-      "main": [
-        [
-          {
-            "node": "Build Slides",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Share file1": {
       "main": [
         [
@@ -503,7 +607,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "Write IDs to Sheet",
             "type": "main",
             "index": 0
           }
@@ -526,6 +630,44 @@
         [
           {
             "node": "Upload Video to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Slides": {
+      "main": [
+        []
+      ]
+    },
+    "Write IDs to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Build Slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
             "type": "main",
             "index": 0
           }
