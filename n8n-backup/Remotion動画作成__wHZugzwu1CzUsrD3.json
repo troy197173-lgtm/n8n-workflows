@@ -26,7 +26,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": {{ JSON.stringify(\"Generate a high quality image based on this theme. Aspect ratio 1:1. \\n\\nTheme: \" + ($json[\"音声\"] || \"Beautiful scenery\")) }}\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.4\n  }\n}",
+        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": {{ JSON.stringify(\n            \"Generate a high quality image based on this theme. \" +\n            \"Aspect ratio 16:9. Cinematic wide shot, detailed, realistic.\\n\\n\" +\n            \"Theme: \" + ($json[\"音声\"] || \"Beautiful scenery\")\n          ) }}\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.4\n  }\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
