@@ -299,31 +299,18 @@
     },
     {
       "parameters": {
-        "command": "=nsenter -t 1 -m -u -n -i -- /home/video-factory/node_modules/.bin/remotion render /home/video-factory/src/index.js Main /home/video-factory/out_{{ $node[\"Upload file1\"].json.id }}.mp4 --props='{\"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file\"].json.id }}\", \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node[\"Upload file1\"].json.id }}\"}'"
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1488,
-        -384
-      ],
-      "id": "524cbf85-8acf-411b-b487-c4777abe9791",
-      "name": "Execute Command"
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "http://151.106.113.224:8080/render",
+        "url": "http://151.106.113.224:8080/render-slides",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"imageUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file'].json.id }}\",\n  \"audioUrl\": \"https://drive.google.com/uc?export=download&id={{ $node['Upload file1'].json.id }}\",\n  \"durationInFrames\": 1200\n}\n",
+        "jsonBody": "=\"url\": \"http://151.106.113.224:8080/render\",\n\"jsonBody\": \"={ ... }\"\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1504,
-        -160
+        832,
+        -320
       ],
       "id": "dff6630e-ac13-4b0e-b593-e24802318534",
       "name": "HTTP Request2"
@@ -342,8 +329,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1712,
-        -160
+        1072,
+        -320
       ],
       "id": "fbab9116-bfb4-49e9-a1cd-190173da7e04",
       "name": "Get Video"
@@ -368,8 +355,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1920,
-        -160
+        1248,
+        -320
       ],
       "id": "55130bf1-0d46-464a-9664-f00aebfb9709",
       "name": "Upload Video to Drive",
@@ -379,6 +366,19 @@
           "name": "Google Drive account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 画像アップロードノードと音声アップロードノードから\n// 全アイテムを取得します\nconst pictureItems = $items(\"Upload file\", 0);\nconst voiceItems   = $items(\"Upload file1\", 0);\n\nif (pictureItems.length !== voiceItems.length) {\n  throw new Error(\n    `画像の数(${pictureItems.length})と音声の数(${voiceItems.length})が違います。`\n  );\n}\n\n// slides 配列を組み立てる\nconst slides = [];\n\nfor (let i = 0; i < pictureItems.length; i++) {\n  const picId   = pictureItems[i].json.id;\n  const audioId = voiceItems[i].json.id;\n\n  if (!picId || !audioId) {\n    throw new Error(`index ${i} で id が取得できませんでした。picId=${picId}, audioId=${audioId}`);\n  }\n\n  slides.push({\n    imageUrl: `https://drive.google.com/uc?export=download&id=${picId}`,\n    audioUrl: `https://drive.google.com/uc?export=download&id=${audioId}`,\n  });\n}\n\n// 次のノードには「slides を 1個の JSON」として渡す\nreturn [\n  {\n    json: {\n      slides,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -320
+      ],
+      "id": "5d8ec75b-e642-4316-b5d1-40a5de96b2ea",
+      "name": "Build Slides"
     }
   ],
   "connections": {
@@ -472,7 +472,13 @@
     },
     "Loop Over Items": {
       "main": [
-        [],
+        [
+          {
+            "node": "Build Slides",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "HTTP Request",
@@ -497,7 +503,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request2",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
