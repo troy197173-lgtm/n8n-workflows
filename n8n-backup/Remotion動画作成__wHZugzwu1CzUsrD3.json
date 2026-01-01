@@ -279,7 +279,7 @@
         "url": "http://151.106.113.224:8080/render-slides",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ \n  {\n    slides: $items(\"Build Slides\").map(item => item.json)\n  } \n}}\n",
+        "jsonBody": "={{ JSON.stringify({ slides: $json[\"slides\"] }) }}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -313,7 +313,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $('Get row(s) in sheet').item.json['file name'] }}＋{{ $('Get row(s) in sheet').item.json['picture name'] }}",
+        "name": "=TEST.mp4",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -376,7 +376,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "番号": "{{$node[\"Loop Over Items\"].item.json[\"番号\"]}}",
+            "番号": "={{$items(\"Get row(s) in sheet\")[$itemIndex].json[\"番号\"]}}",
             "picture_id": "={{$node[\"Upload file\"].json[\"id\"]}}",
             "voice_id": "={{$node[\"Upload file1\"].json[\"id\"]}}"
           },
@@ -467,34 +467,6 @@
       ],
       "id": "ba3b7527-c4c0-4599-adc3-fd950a2f0472",
       "name": "Write IDs to Sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "lyaEHmlz1UlOMhPz",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "mode": "list",
-          "value": ""
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        1728,
-        -160
-      ],
-      "id": "e8dc9cd0-f0aa-48da-aa88-7faf9e0f5ebd",
-      "name": "Get row(s) in sheet1",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "lyaEHmlz1UlOMhPz",
@@ -638,21 +610,16 @@
     },
     "Build Slides": {
       "main": [
-        []
-      ]
-    },
-    "Write IDs to Sheet": {
-      "main": [
         [
           {
-            "node": "Get row(s) in sheet1",
+            "node": "HTTP Request2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get row(s) in sheet1": {
+    "Write IDs to Sheet": {
       "main": [
         [
           {
