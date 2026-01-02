@@ -117,13 +117,13 @@
             {
               "id": "bf7bcd4f-1b2a-44ca-8e74-15f061ca2ae6",
               "name": "title",
-              "value": "={{ $('HTTP Request').item.json.title }}",
+              "value": "={{ $('RSS Read').item.json.title }}",
               "type": "string"
             },
             {
               "id": "0abcca5f-2d3f-4eeb-aaf8-db1596232252",
               "name": "text",
-              "value": "={{ $('HTTP Request').item.json.text }}",
+              "value": "={{ $('HTTP Request').item.json.data }}",
               "type": "string"
             }
           ]
@@ -150,7 +150,7 @@
         "messages": {
           "values": [
             {
-              "content": "=あなたは技術記事の翻訳者兼記事のライターです。以下の記事を日本語に翻訳して、わかりやすくマークダウン形式の記事にしてください。またアルファベットの名前は日本人に屋読みにくいのでローマ字のカタカナ表記にしてください。\n\n「はい、承知いたしました」「翻訳しました」などの挨拶、前置き、解説は一切出力しないでください。\n\n指定されたマークダウン形式の文章のみを直接出力してください。\n\n最初の文字は必ず「# タイトル」から始めてください。\n\n記事は以下です。\n{{ $json.text }}\n\n\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\n\n\n出力は以下の構成を厳守してください：\n\n# [タイトル]\n![画像]({{ $('Message a model').item.json.content.parts[0].text }})\n\n> [要約文]\n\n## [見出し1]\n[本文1]\n\n## [見出し2]\n[本文2]\n\n---\n[原文を読む]({{ $('Limit').item.json.link }})\n\n※「」や解説、コードブロック（```）は含めず、この構造のテキストのみを出力してください。"
+              "content": "=あなたは技術記事の翻訳者兼記事のライターです。以下の記事を日本語に翻訳して、わかりやすくマークダウン形式の記事にしてください。またアルファベットの名前は日本人に読みにくいのでカタカナ表記にしてください。\n\n「はい、承知いたしました」「翻訳しました」などの挨拶、前置き、解説は一切出力しないでください。\n指定されたマークダウン形式の文章のみを直接出力してください。\n最初の文字は必ず「# タイトル」から始めてください。\n\n記事は以下です。\n{{ $json.text }}\n\n- 単位（GWh、年、%など）は維持\n- 文章は自然な技術日本語にする\n- 広告/誘導文（Subscribe/Read the latest等）は出力しない\n\n出力は以下の構成を厳守してください：\n\n# [タイトル]\n![画像]({{ $('Message a model').item.json.content.parts[0].text }})\n\n> [要約文]\n\n## [見出し1]\n[本文1]\n\n## [見出し2]\n[本文2]\n\n---\n[原文を読む]({{ $('Limit').item.json.link }})\n\n※「」や解説、コードブロック（```）は含めず、この構造のテキストのみを出力してください。"
             }
           ]
         },
@@ -173,7 +173,7 @@
     },
     {
       "parameters": {
-        "name": "={{ $('Get row(s) in sheet').first().json['ファイルネーム'] }}_{{ $now.format('yyyy-MM-dd_HHmm') }}.md",
+        "name": "={{ $now.format('yyyyMMdd_HHmm') }}_{{ $('Pick Title & Text').first().json.title.substring(0, 15) }}...他.md",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -205,8 +205,9 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://readability-api:3000/extract",
+        "url": "=https://r.jina.ai/{{ encodeURIComponent($json.link) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jinaAiApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -216,16 +217,14 @@
             }
           ]
         },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "url",
-              "value": "={{ $json.link }}"
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3500
             }
-          ]
-        },
-        "options": {}
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
@@ -234,7 +233,15 @@
         16
       ],
       "id": "60b9c24f-2fde-4cd5-8dbe-ee9c22abac70",
-      "name": "HTTP Request"
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "credentials": {
+        "jinaAiApi": {
+          "id": "oPoNkvuryQ0exWsK",
+          "name": "Jina AI account"
+        }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -277,8 +284,8 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        1808,
-        16
+        1888,
+        -336
       ],
       "id": "1e72e0f2-4219-42fe-a1af-c0943e85a579",
       "name": "HTML"
@@ -294,7 +301,7 @@
         "messages": {
           "values": [
             {
-              "content": "=あなたはプロのWeb編集者です。提供されたURLリストから、記事のメインアイキャッチ画像として最適なものを1つだけ選出してください。\n\n【選定ルール】\n\ndata:image/ で始まるベース64形式のダミー画像は除外してください。\n\n「hitachi」「cvent」「advertise」「logo」など、広告やサイトロゴと思われるURLは除外してください。\n\n記事タイトル（{{ $('HTTP Request').item.json.title }}）の内容を最もよく表している画像URLを優先してください。\n\n【出力形式】\n\nURLのみを出力してください。\n\n解説、挨拶、Markdownタグ（![]()など）は一切含めないでください。\n\n【入力リスト】 {{ $json.src_images }}"
+              "content": "=あなたはプロのWeb編集者です。\n提供されたMarkdown形式の記事内容から、記事のメインアイキャッチ画像として最適なURLを1つだけ抽出・選出してください。\n\n【選定ルール】\n1. 記事内容に含まれる画像URLの中から、最も内容を象徴するものを1つ選んでください。\n2. 広告、ロゴ、アイコン、SNSのプロフィール画像と思われるものは除外してください。\n3. もし適切な画像URLが見つからない場合は、必ず「NO_IMAGE」とだけ出力してください。\n\n【出力形式】\nURLのみを出力してください。解説、挨拶、Markdownタグ（![]()など）は一切含めないでください。\n\n【記事内容】\n{{ $json.data }}"
             }
           ]
         },
@@ -519,7 +526,7 @@
       "main": [
         [
           {
-            "node": "HTML",
+            "node": "Message a model",
             "type": "main",
             "index": 0
           }
@@ -528,13 +535,7 @@
     },
     "HTML": {
       "main": [
-        [
-          {
-            "node": "Message a model",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Message a model": {
