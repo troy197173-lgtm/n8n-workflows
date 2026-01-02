@@ -294,7 +294,7 @@
         "messages": {
           "values": [
             {
-              "content": "=あなたはプロのWeb編集者です。提供されたURLリストから、記事のメインアイキャッチ画像として最適なものを1つだけ選出してください。\n\n【選定ルール】\n\ndata:image/ で始まるベース64形式のダミー画像は除外してください。\n\n「hitachi」「cvent」「advertise」「logo」など、広告やサイトロゴと思われるURLは除外してください。\n\n記事タイトル（{{ $('HTTP Request').item.json.title }}）の内容を最もよく表している画像URLを優先してください。\n\n【出力形式】\n\nURLのみを出力してください。\n\n解説、挨拶、Markdownタグ（![]()など）は一切含めないでください。\n\n【入力リスト】 {{ $json.data_images }}"
+              "content": "=あなたはプロのWeb編集者です。提供されたURLリストから、記事のメインアイキャッチ画像として最適なものを1つだけ選出してください。\n\n【選定ルール】\n\ndata:image/ で始まるベース64形式のダミー画像は除外してください。\n\n「hitachi」「cvent」「advertise」「logo」など、広告やサイトロゴと思われるURLは除外してください。\n\n記事タイトル（{{ $('HTTP Request').item.json.title }}）の内容を最もよく表している画像URLを優先してください。\n\n【出力形式】\n\nURLのみを出力してください。\n\n解説、挨拶、Markdownタグ（![]()など）は一切含めないでください。\n\n【入力リスト】 {{ $json.src_images }}"
             }
           ]
         },
@@ -311,6 +311,7 @@
       ],
       "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
       "name": "Message a model",
+      "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
           "id": "DFFd6i9vv2cgVPir",
