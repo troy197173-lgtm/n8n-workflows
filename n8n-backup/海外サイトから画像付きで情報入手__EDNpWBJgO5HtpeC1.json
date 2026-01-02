@@ -37,7 +37,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        64,
+        272,
         0
       ],
       "id": "06edd7b3-6a9f-445d-a598-fcb354715b8c",
@@ -56,7 +56,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        272,
+        480,
         0
       ],
       "id": "d3c74464-b6ee-4d4b-8751-386ce9c6c1cb",
@@ -70,7 +70,7 @@
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.2,
       "position": [
-        512,
+        720,
         16
       ],
       "id": "49e71e48-a696-4116-80c0-0f4de6399c35",
@@ -91,7 +91,7 @@
       "type": "n8n-nodes-base.sort",
       "typeVersion": 1,
       "position": [
-        720,
+        1136,
         16
       ],
       "id": "b96a2727-f8c8-4b01-b783-412db05d2cd9",
@@ -99,12 +99,12 @@
     },
     {
       "parameters": {
-        "maxItems": 5
+        "maxItems": 100
       },
       "type": "n8n-nodes-base.limit",
       "typeVersion": 1,
       "position": [
-        944,
+        1360,
         16
       ],
       "id": "27da26d5-67a5-466c-8489-a9dda3d2ac92",
@@ -133,7 +133,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1872,
+        2288,
         0
       ],
       "id": "4c810f95-9af8-4454-9cf9-61ad8df14fbc",
@@ -159,7 +159,7 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        2016,
+        2432,
         16
       ],
       "id": "4f32f43e-2b89-4857-8ff2-06c59398d103",
@@ -191,7 +191,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2752,
+        3168,
         32
       ],
       "id": "ada0a324-9e9b-4671-a1cd-50a78c47d73a",
@@ -230,7 +230,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1152,
+        1568,
         16
       ],
       "id": "60b9c24f-2fde-4cd5-8dbe-ee9c22abac70",
@@ -277,7 +277,7 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        1392,
+        1808,
         16
       ],
       "id": "1e72e0f2-4219-42fe-a1af-c0943e85a579",
@@ -306,7 +306,7 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1584,
+        2000,
         16
       ],
       "id": "36fd54e0-47ee-4a2d-9cdb-dc67f62b8ff7",
@@ -325,7 +325,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2368,
+        2784,
         16
       ],
       "id": "a553aa7a-30b1-4216-834c-a4bf3db40d02",
@@ -342,11 +342,75 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        2576,
+        2992,
         16
       ],
       "id": "114a6cd8-0f5b-4f20-92bf-2667c8429475",
       "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "56552c36-7ff4-4ccb-a136-30ac9c07d76f",
+              "name": "from_ms",
+              "value": "={{ $now.minus({ days: 7 }).toMillis() }}",
+              "type": "number"
+            },
+            {
+              "id": "633f7fbf-7f74-4639-ab07-d3b6dd5d3a9e",
+              "name": "to_ms",
+              "value": "={{ $now.toMillis() }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        0
+      ],
+      "id": "657809ae-f7d3-4f89-bd5a-27adf7ccb4f8",
+      "name": "Date Window"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7ed9d385-2622-4449-8b58-83c20453d01d",
+              "leftValue": "=={{ (() => {\n  const d = $json.isoDate ?? $json.pubDate;\n  if (!d) return false;\n\n  const t = new Date(d).getTime();\n  const w = $items(\"Date Window\")[0].json;   // ← Date Window を0番固定で参照\n\n  return t >= w.from_ms && t <= w.to_ms;\n})() }}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        16
+      ],
+      "id": "ba74d911-995d-4efd-8416-b5b6027dc4d1",
+      "name": "If"
     }
   ],
   "connections": {
@@ -354,7 +418,7 @@
       "main": [
         [
           {
-            "node": "Get row(s) in sheet",
+            "node": "Date Window",
             "type": "main",
             "index": 0
           }
@@ -388,7 +452,7 @@
       "main": [
         [
           {
-            "node": "Sort",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -499,6 +563,28 @@
         [
           {
             "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date Window": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Sort",
             "type": "main",
             "index": 0
           }
