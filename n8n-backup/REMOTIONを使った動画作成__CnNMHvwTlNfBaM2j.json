@@ -278,8 +278,18 @@
         "method": "POST",
         "url": "http://151.106.113.224:8080/render-slides",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ slides: $json[\"slides\"] }) }}\n",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "slides",
+              "value": "={{ $json.slides }}"
+            },
+            {
+              "name": "avatar",
+              "value": "={{ $json.avatar }}"
+            }
+          ]
+        },
         "options": {
           "timeout": 600000
         }
@@ -347,7 +357,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 画像アップロードノードと音声アップロードノードから\n// 全アイテムを取得します\nconst pictureItems = $items(\"Upload file\", 0);\nconst voiceItems   = $items(\"Upload file1\", 0);\n\nif (pictureItems.length !== voiceItems.length) {\n  throw new Error(\n    `画像の数(${pictureItems.length})と音声の数(${voiceItems.length})が違います。`\n  );\n}\n\n// slides 配列を組み立てる\nconst slides = [];\n\nfor (let i = 0; i < pictureItems.length; i++) {\n  const picId   = pictureItems[i].json.id;\n  const audioId = voiceItems[i].json.id;\n\n  if (!picId || !audioId) {\n    throw new Error(`index ${i} で id が取得できませんでした。picId=${picId}, audioId=${audioId}`);\n  }\n\n  slides.push({\n    imageUrl: `https://drive.google.com/uc?export=download&id=${picId}`,\n    audioUrl: `https://drive.google.com/uc?export=download&id=${audioId}`,\n  });\n}\n\n// 次のノードには「slides を 1個の JSON」として渡す\nreturn [\n  {\n    json: {\n      slides,\n    },\n  },\n];\n"
+        "jsCode": "// 画像アップロードノードと音声アップロードノードから\n// 全アイテムを取得します\nconst pictureItems = $items(\"Upload file\", 0);\nconst voiceItems   = $items(\"Upload file1\", 0);\n\nif (pictureItems.length !== voiceItems.length) {\n  throw new Error(\n    `画像の数(${pictureItems.length})と音声の数(${voiceItems.length})が違います。`\n  );\n}\n\n// slides 配列を組み立てる\nconst slides = [];\n\nfor (let i = 0; i < pictureItems.length; i++) {\n  const picId   = pictureItems[i].json.id;\n  const audioId = voiceItems[i].json.id;\n\n  if (!picId || !audioId) {\n    throw new Error(`index ${i} で id が取得できませんでした。picId=${picId}, audioId=${audioId}`);\n  }\n\n  slides.push({\n    imageUrl: `https://drive.google.com/uc?export=download&id=${picId}`,\n    audioUrl: `https://drive.google.com/uc?export=download&id=${audioId}`,\n  });\n}\n\n/**\n * ★ アバター設定（ここだけ切替）\n * enabled: true で重ねる / false で従来通り\n *\n * サイズは指定しない（= VPS側で動画の幅高さを取得して、そのまま表示）\n * 位置だけ right/bottom を指定する\n */\nconst avatarEnabled = true; // ←必要に応じて false に\n\nconst avatar = {\n  enabled: avatarEnabled,\n  // Google Drive 共有リンクのIDを uc?export=download にした直DL\n  videoUrl: \"https://drive.google.com/uc?export=download&id=19Y1AMNyzZfBy4dofbjO9jfGnHZumHj43\",\n  stillUrl: \"https://drive.google.com/uc?export=download&id=1kzDKpyuScDIs9ySvTInn69MOPq8NmxBA\",\n  // 位置だけ指定（px）\n  position: { right: -390, bottom: 20 }\n};\n\n// 次のノードには「slides + avatar を 1個の JSON」として渡す\nreturn [\n  {\n    json: {\n      slides,\n      avatar,\n    },\n  },\n];\n\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
