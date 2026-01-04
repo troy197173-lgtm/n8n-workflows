@@ -14,10 +14,6 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-goog-api-key",
-              "value": "AIzaSyBtdEdnhcMnIX9kqapJd2ZJKmpKUPSpE0s"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
             }
@@ -32,7 +28,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        272,
+        304,
         416
       ],
       "id": "6fc2042d-47eb-4de0-a733-c72de89b2cc0",
@@ -100,7 +96,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        608,
+        560,
         416
       ],
       "id": "ef186aad-08c2-43e1-8efb-b8d4c200138d",
@@ -115,7 +111,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// ===== 画像生成レスポンス =====\nconst responseData = $input.item.json;\n\n// ===== このアイテムに対応するシート行から picture name を取る =====\nconst sheetItems = $items(\"Get row(s) in sheet\");\nconst pictureNameRaw = (sheetItems?.[$itemIndex]?.json?.[\"picture name\"] ?? \"generated_image\").toString();\n\n// ファイル名に使えない文字を除去（Driveで安全）\nconst safeBase = pictureNameRaw\n  .replace(/[\\\\\\/:*?\"<>|]/g, \"_\")\n  .trim();\n\nconst fileBase = safeBase.length ? safeBase : `generated_${$itemIndex + 1}`;\nconst fileName = fileBase.toLowerCase().endsWith(\".png\") ? fileBase : `${fileBase}.png`;\n\n// ===== base64 を探す =====\nlet base64String = null;\nif (responseData?.candidates?.length) {\n  const parts = responseData.candidates[0]?.content?.parts ?? [];\n  for (const part of parts) {\n    if (part?.inlineData?.data) {\n      base64String = part.inlineData.data;\n      break;\n    }\n  }\n}\nif (!base64String) throw new Error(\"画像データが見つかりません。\");\n\n// ===== binary化 =====\nconst binaryData = Buffer.from(base64String, \"base64\");\n\n// ★重要：jsonにも picture_name を入れて次ノードで使えるようにする\nreturn {\n  json: {\n    picture_name: fileName,     // ←これが次のUploadで使える\n    message: \"画像変換成功\",\n  },\n  binary: {\n    data: {\n      data: binaryData.toString(\"base64\"),\n      mimeType: \"image/png\",\n      fileName,                 // ←アイテムごとに違う名前になる\n    },\n  },\n};\n"
+        "jsCode": "// 1) シート側の情報を保持したまま使う\nconst rowJson = { ...$json };      // ← ここに番号/rowIndex/picture name等がいる\nconst responseData = $json.gen ?? $json;    // ← HTTP Requestで \"Put response in field\" にした場合\n\n// 2) 画像データ抽出\nlet base64String = null;\n\nif (responseData?.candidates?.length) {\n  const parts = responseData.candidates[0]?.content?.parts ?? [];\n  for (const part of parts) {\n    if (part.inlineData?.data) {\n      base64String = part.inlineData.data;\n      break;\n    }\n  }\n}\nif (!base64String) throw new Error(\"画像データが見つかりません。\");\n\n// 3) バイナリ化\nconst binaryData = Buffer.from(base64String, \"base64\");\n\n// 4) ファイル名はシートの picture name を使う（個別になる）\nconst picName =\n  rowJson.picture_name ??\n  rowJson[\"picture name\"] ??\n  rowJson.pictureName ??\n  \"generated_image\";\n\n// gen はもう不要なら消す（重くなるので）\ndelete rowJson.gen;\n\nreturn {\n  json: {\n    ...rowJson,          // ← 番号が残る！\n    picture_name: picName,\n    message: \"画像変換成功\",\n  },\n  binary: {\n    data: {\n      data: binaryData.toString(\"base64\"),\n      mimeType: \"image/png\",\n      fileName: picName.endsWith(\".png\") ? picName : `${picName}.png`,\n    },\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -566,7 +562,7 @@
             {
               "id": "fed69b3e-1452-4b68-b0a9-9a63f716fb33",
               "name": "picture_id",
-              "value": "=={{ $json.picture_id }}",
+              "value": "={{ $json.picture_id }}",
               "type": "string"
             }
           ]
@@ -577,35 +573,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        304,
-        752
+        704,
+        704
       ],
       "id": "c0dd1704-b187-4065-8b06-ea285a7e8ad9",
       "name": "Set picture_id (from existing)"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "0b12620c-5965-4ba2-bc83-a62b09603abf",
-              "name": "picture_id",
-              "value": "={{ $json.id }}",
-              "type": "string"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        752,
-        416
-      ],
-      "id": "f9a29396-0fc9-476d-ab34-8bf68f868083",
-      "name": "Edit Fields"
     },
     {
       "parameters": {},
@@ -735,16 +707,16 @@
     },
     {
       "parameters": {
-        "jsCode": "// Merge(append)の出力（Driveアイテム + Sheetアイテムが混在）を受け取る前提\nconst items = $input.all();\n\nconst norm = (s) => (s ?? \"\").toString().trim().toLowerCase();\n\n// 1) Drive側（kind=drive#file かつ image/*）から name -> id の辞書を作る\nconst driveMap = new Map();\nfor (const it of items) {\n  const j = it.json || {};\n  if (j.kind === \"drive#file\" && (j.mimeType || \"\").startsWith(\"image/\")) {\n    driveMap.set(norm(j.name), j.id);\n  }\n}\n\n// 2) Sheet側（番号がある）だけを取り出し、picture_id を確定させる\nconst out = [];\nfor (const it of items) {\n  const j = it.json || {};\n  if (j[\"番号\"] === undefined) continue; // Sheet行以外は捨てる\n\n  const picName = norm(j[\"picture name\"] ?? j.picture_name ?? \"\");\n  const foundId = driveMap.get(picName);\n\n  // Sheetにすでに picture_id が入っている場合（先頭が \"=\" のときもあるので除去）\n  const existingId = norm((j.picture_id ?? \"\")).replace(/^=/, \"\").trim();\n\n  const finalId = foundId || (existingId ? existingId : \"\");\n\n  out.push({\n    json: {\n      ...j,\n      picture_id: finalId,\n      needsGenerateImage: finalId ? false : true,\n    },\n  });\n}\n\nreturn out;\n"
+        "jsCode": "// Upload file の出力（drive#file）が $json\nconst uploaded = $json;\n\n// 生成前の「シート行を持ってるアイテム」は Code in JavaScript の出力に残ってる想定\nconst before = $items(\"Code in JavaScript\", 0)[$itemIndex].json;\n\n// ここで番号などを復活させつつ、picture_id を確定\nreturn {\n  json: {\n    ...before,\n    picture_id: uploaded.id,           // 生成してアップロードした画像ID\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
+        736,
         432
       ],
-      "id": "5a0e1ff6-f36b-4282-9a1a-ed6d19efc331",
-      "name": "Code in JavaScript3"
+      "id": "6af926a3-1971-4dba-b204-7d802f5f3da4",
+      "name": "Attach sheet fields (true)"
     }
   ],
   "connections": {
@@ -774,7 +746,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Attach sheet fields (true)",
             "type": "main",
             "index": 0
           }
@@ -953,22 +925,11 @@
         ]
       ]
     },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Merge": {
       "main": [
         [
           {
-            "node": "Code in JavaScript3",
+            "node": "Update Picture_id",
             "type": "main",
             "index": 0
           }
@@ -977,14 +938,20 @@
     },
     "Update Picture_id": {
       "main": [
-        []
+        [
+          {
+            "node": "Share file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Code in JavaScript3": {
+    "Attach sheet fields (true)": {
       "main": [
         [
           {
-            "node": "Update Picture_id",
+            "node": "Merge",
             "type": "main",
             "index": 0
           }
