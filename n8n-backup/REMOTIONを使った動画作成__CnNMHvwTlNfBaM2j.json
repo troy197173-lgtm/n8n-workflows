@@ -707,13 +707,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Upload file の出力（drive#file）が $json\nconst uploaded = $json;\n\n// 生成前の「シート行を持ってるアイテム」は Code in JavaScript の出力に残ってる想定\nconst before = $items(\"Code in JavaScript\", 0)[$itemIndex].json;\n\n// ここで番号などを復活させつつ、picture_id を確定\nreturn {\n  json: {\n    ...before,\n    picture_id: uploaded.id,           // 生成してアップロードした画像ID\n  },\n};\n"
+        "jsCode": "// Upload file の出力（drive#file）\nconst uploaded = $json;\n\n// ★ True側の元データは If の true 出力から拾う（ここが重要）\nconst row = $items(\"If\", 0)[$itemIndex].json;\n\n// シート行 + 生成した画像ID を合体\nreturn {\n  json: {\n    ...row,\n    picture_id: uploaded.id,\n    // ついでに名前も確定させる（任意）\n    picture_name: row.picture_name ?? row[\"picture name\"] ?? row.picture_name,\n    needsGenerateImage: false,\n  },\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         736,
-        432
+        416
       ],
       "id": "6af926a3-1971-4dba-b204-7d802f5f3da4",
       "name": "Attach sheet fields (true)"
@@ -938,13 +938,7 @@
     },
     "Update Picture_id": {
       "main": [
-        [
-          {
-            "node": "Share file1",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Attach sheet fields (true)": {
